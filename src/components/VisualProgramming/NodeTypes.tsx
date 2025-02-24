@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -45,7 +46,43 @@ interface NodeWrapperProps {
   totalNodes?: number;
 }
 
-const NodeWrapper = ({ 
+interface NodeProps {
+  data: {
+    onDelete?: (params: { nodes: { id: string }[] }) => void;
+    onMoveUp?: () => void;
+    onMoveDown?: () => void;
+    onChange?: (value: string) => void;
+    onValueChange?: (value: string) => void;
+    onIterableChange?: (value: string) => void;
+    onPromptChange?: (value: string) => void;
+    onParamsChange?: (value: string) => void;
+    onErrorChange?: (value: string) => void;
+    onExpressionChange?: (value: string) => void;
+    onFilenameChange?: (value: string) => void;
+    onModeChange?: (value: string) => void;
+    onAliasChange?: (value: string) => void;
+    variable?: string;
+    value?: string;
+    condition?: string;
+    iterable?: string;
+    content?: string;
+    prompt?: string;
+    name?: string;
+    params?: string;
+    code?: string;
+    error?: string;
+    expression?: string;
+    filename?: string;
+    mode?: string;
+    module?: string;
+    alias?: string;
+    position?: number;
+    totalNodes?: number;
+  };
+  id: string;
+}
+
+const NodeWrapper = memo(({ 
   children, 
   color, 
   onDelete,
@@ -127,9 +164,9 @@ const NodeWrapper = ({
       </CardContent>
     </Card>
   );
-};
+});
 
-export const IfBlock = ({ data, id }: { data: any; id: string }) => (
+export const IfBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper 
     color="blue"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
@@ -159,14 +196,18 @@ export const IfBlock = ({ data, id }: { data: any; id: string }) => (
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const PrintBlock = ({ data, id }: { data: any; id: string }) => (
+export const PrintBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper
     color="green"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
     info="Outputs text or variable values to the console"
     title="Print"
+    position={data.position}
+    totalNodes={data.totalNodes}
   >
     <>
       <Printer className={cn("h-4 w-4", getNodeColors("green").icon)} />
@@ -187,37 +228,48 @@ export const PrintBlock = ({ data, id }: { data: any; id: string }) => (
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const InputBlock = ({ data, id }: { data: any; id: string }) => (
+export const InputBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper 
     color="purple"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
     info="Creates an input prompt to get user input and store it in a variable"
     title="Input"
   >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("purple").icon)} />
+    </>
     <div className="space-y-3">
       <div>
-        <Input 
-          value={data.variable}
-          onChange={(e) => data.onChange?.(e.target.value)}
-          placeholder="e.g., user_input"
-          className={cn(nodeStyles.input, getNodeColors("purple").ring)}
-        />
-      </div>
-      <div>
-        <Input 
-          value={data.prompt}
-          onChange={(e) => data.onPromptChange?.(e.target.value)}
-          placeholder="Enter your prompt..."
-          className={cn(nodeStyles.input, getNodeColors("purple").ring)}
-        />
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Variable Name</label>
+            <Input 
+              value={data.variable}
+              onChange={(e) => data.onChange?.(e.target.value)}
+              placeholder="e.g., user_input"
+              className={cn(nodeStyles.input, getNodeColors("purple").ring)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Prompt</label>
+            <Input 
+              value={data.prompt}
+              onChange={(e) => data.onPromptChange?.(e.target.value)}
+              placeholder="Enter your prompt..."
+              className={cn(nodeStyles.input, getNodeColors("purple").ring)}
+            />
+          </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const ForBlock = ({ data, id }: { data: any; id: string }) => (
+export const ForBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper 
     color="yellow"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
@@ -258,9 +310,9 @@ export const ForBlock = ({ data, id }: { data: any; id: string }) => (
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const WhileBlock = ({ data, id }: { data: any; id: string }) => (
+export const WhileBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper 
     color="red"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
@@ -290,88 +342,183 @@ export const WhileBlock = ({ data, id }: { data: any; id: string }) => (
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const ListBlock = ({ data }: { data: any }) => (
-  <Card className="w-48">
-    <CardHeader className={getNodeColors("indigo").header}>
-      <CardTitle>List</CardTitle>
-    </CardHeader>
-    <CardContent className={getNodeColors("indigo").gradient}>
-      <Input 
-        value={data.variable}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="List name..."
-      />
-      <Input 
-        value={data.value}
-        onChange={(e) => data.onValueChange?.(e.target.value)}
-        placeholder="Initial value..."
-        className="mt-2"
-      />
-    </CardContent>
-  </Card>
-);
+export const ListBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="indigo"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    info="Creates a list data structure with initial values"
+    title="List"
+    position={data.position}
+    totalNodes={data.totalNodes}
+  >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("indigo").icon)} />
+    </>
+    <div className="space-y-3">
+      <div>
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>List Name</label>
+            <Input 
+              value={data.variable}
+              onChange={(e) => data.onChange?.(e.target.value)}
+              placeholder="e.g., my_list"
+              className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Initial Values</label>
+            <Input 
+              value={data.value}
+              onChange={(e) => data.onValueChange?.(e.target.value)}
+              placeholder="e.g., [1, 2, 3]"
+              className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
+            />
+          </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
+      </div>
+    </div>
+  </NodeWrapper>
+));
 
-export const DictBlock = ({ data }: { data: any }) => (
-  <Card className="w-48">
-    <CardHeader className={getNodeColors("pink").header}>
-      <CardTitle>Dictionary</CardTitle>
-    </CardHeader>
-    <CardContent className={getNodeColors("pink").gradient}>
-      <Input 
-        value={data.variable}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="Dict name..."
-      />
-      <Input 
-        value={data.value}
-        onChange={(e) => data.onValueChange?.(e.target.value)}
-        placeholder="Initial value..."
-        className="mt-2"
-      />
-    </CardContent>
-  </Card>
-);
+export const DictBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="pink"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    info="Creates a dictionary with key-value pairs"
+    title="Dictionary"
+    position={data.position}
+    totalNodes={data.totalNodes}
+  >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("pink").icon)} />
+    </>
+    <div className="space-y-3">
+      <div>
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Dict Name</label>
+            <Input 
+              value={data.variable}
+              onChange={(e) => data.onChange?.(e.target.value)}
+              placeholder="e.g., my_dict"
+              className={cn(nodeStyles.input, getNodeColors("pink").ring)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Initial Values</label>
+            <Input 
+              value={data.value}
+              onChange={(e) => data.onValueChange?.(e.target.value)}
+              placeholder="e.g., {'key': 'value'}"
+              className={cn(nodeStyles.input, getNodeColors("pink").ring)}
+            />
+          </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
+      </div>
+    </div>
+  </NodeWrapper>
+));
 
-export const FunctionBlock = ({ data }: { data: any }) => (
-  <Card className="w-48">
-    <CardHeader className={getNodeColors("orange").header}>
-      <CardTitle>Function</CardTitle>
-    </CardHeader>
-    <CardContent className={getNodeColors("orange").gradient}>
-      <Input 
-        value={data.name}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="Function name..."
-      />
-      <Input 
-        value={data.params}
-        onChange={(e) => data.onParamsChange?.(e.target.value)}
-        placeholder="Parameters..."
-        className="mt-2"
-      />
-    </CardContent>
-  </Card>
-);
+export const FunctionBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="orange"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    info="Defines a reusable function with parameters"
+    title="Function"
+    position={data.position}
+    totalNodes={data.totalNodes}
+  >
+    <>
+      <Code2 className={cn("h-4 w-4", getNodeColors("orange").icon)} />
+    </>
+    <div className="space-y-3">
+      <div>
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Function Name</label>
+            <Input 
+              value={data.name}
+              onChange={(e) => data.onChange?.(e.target.value)}
+              placeholder="e.g., my_function"
+              className={cn(nodeStyles.input, getNodeColors("orange").ring)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Parameters</label>
+            <Input 
+              value={data.params}
+              onChange={(e) => data.onParamsChange?.(e.target.value)}
+              placeholder="e.g., param1, param2"
+              className={cn(nodeStyles.input, getNodeColors("orange").ring)}
+            />
+          </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
+      </div>
+    </div>
+  </NodeWrapper>
+));
 
-export const ReturnBlock = ({ data }: { data: any }) => (
-  <Card className="w-48">
-    <CardHeader className={getNodeColors("teal").header}>
-      <CardTitle>Return</CardTitle>
-    </CardHeader>
-    <CardContent className={getNodeColors("teal").gradient}>
-      <Input 
-        value={data.value}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="Return value..."
-      />
-    </CardContent>
-  </Card>
-);
+export const ReturnBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper
+    color="teal"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    info="Returns a value from a function"
+    title="Return"
+    position={data.position}
+    totalNodes={data.totalNodes}
+  >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("teal").icon)} />
+    </>
+    <div className="space-y-3">
+      <div>
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-1">
+          <label className={nodeStyles.label}>Return Value</label>
+          <Input 
+            value={data.value}
+            onChange={(e) => data.onChange?.(e.target.value)}
+            placeholder="Return value..."
+            className={cn(nodeStyles.input, getNodeColors("teal").ring)}
+          />
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
+      </div>
+    </div>
+  </NodeWrapper>
+));
 
-export const TupleBlock = ({ data }: { data: any }) => (
-  <NodeWrapper color="indigo" title="Tuple">
+export const TupleBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="indigo" 
+    title="Tuple"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    position={data.position}
+    totalNodes={data.totalNodes}
+    info="Creates a tuple data structure with initial values"
+  >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("indigo").icon)} />
+    </>
     <div className="space-y-2">
       <Input 
         value={data.variable}
@@ -387,10 +534,22 @@ export const TupleBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const SetBlock = ({ data }: { data: any }) => (
-  <NodeWrapper color="fuchsia" title="Set">
+export const SetBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="fuchsia" 
+    title="Set"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    position={data.position}
+    totalNodes={data.totalNodes}
+    info="Creates a set data structure with initial values"
+  >
+    <>
+      <Type className={cn("h-4 w-4", getNodeColors("fuchsia").icon)} />
+    </>
     <div className="space-y-2">
       <Input 
         value={data.variable}
@@ -406,9 +565,9 @@ export const SetBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const LambdaBlock = ({ data }: { data: any }) => (
+export const LambdaBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper color="amber" title="Lambda">
     <div className="space-y-2">
       <Input 
@@ -425,9 +584,9 @@ export const LambdaBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const OpenFileBlock = ({ data }: { data: any }) => (
+export const OpenFileBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper color="cyan" title="Open File">
     <div className="space-y-2">
       <Input 
@@ -450,28 +609,52 @@ export const OpenFileBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const TryBlock = ({ data }: { data: any }) => (
-  <NodeWrapper color="rose" title="Try/Except">
-    <div className="space-y-2">
-      <Input 
-        value={data.code}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="Try block code..."
-        className={nodeStyles.input}
-      />
-      <Input 
-        value={data.error}
-        onChange={(e) => data.onErrorChange?.(e.target.value)}
-        placeholder="Exception type..."
-        className={nodeStyles.input}
-      />
+export const TryBlock = memo(({ data, id }: NodeProps) => (
+  <NodeWrapper 
+    color="rose"
+    onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
+    onMoveUp={data.onMoveUp}
+    onMoveDown={data.onMoveDown}
+    info="Implements error handling with try/except blocks"
+    title="Try/Except"
+    position={data.position}
+    totalNodes={data.totalNodes}
+  >
+    <>
+      <Info className={cn("h-4 w-4", getNodeColors("rose").icon)} />
+    </>
+    <div className="space-y-3">
+      <div>
+        <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+        <div className="space-y-2">
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Try Block Code</label>
+            <Input 
+              value={data.code}
+              onChange={(e) => data.onChange?.(e.target.value)}
+              placeholder="Code to try..."
+              className={cn(nodeStyles.input, getNodeColors("rose").ring)}
+            />
+          </div>
+          <div className="space-y-1">
+            <label className={nodeStyles.label}>Exception Type</label>
+            <Input 
+              value={data.error}
+              onChange={(e) => data.onErrorChange?.(e.target.value)}
+              placeholder="e.g., Exception"
+              className={cn(nodeStyles.input, getNodeColors("rose").ring)}
+            />
+          </div>
+        </div>
+        <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
+      </div>
     </div>
   </NodeWrapper>
-);
+));
 
-export const ImportBlock = ({ data }: { data: any }) => (
+export const ImportBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper color="emerald" title="Import">
     <div className="space-y-2">
       <Input 
@@ -488,9 +671,9 @@ export const ImportBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const NumpyArrayBlock = ({ data }: { data: any }) => (
+export const NumpyArrayBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper color="violet" title="NumPy Array">
     <div className="space-y-2">
       <Input 
@@ -507,34 +690,9 @@ export const NumpyArrayBlock = ({ data }: { data: any }) => (
       />
     </div>
   </NodeWrapper>
-);
+));
 
-export const MatplotlibPlotBlock = ({ data }: { data: any }) => (
-  <NodeWrapper color="sky" title="Plot">
-    <div className="space-y-2">
-      <Input 
-        value={data.x}
-        onChange={(e) => data.onChange?.(e.target.value)}
-        placeholder="X data..."
-        className={nodeStyles.input}
-      />
-      <Input 
-        value={data.y}
-        onChange={(e) => data.onYChange?.(e.target.value)}
-        placeholder="Y data..."
-        className={nodeStyles.input}
-      />
-      <Input 
-        value={data.type}
-        onChange={(e) => data.onTypeChange?.(e.target.value)}
-        placeholder="Plot type..."
-        className={nodeStyles.input}
-      />
-    </div>
-  </NodeWrapper>
-);
-
-export const VariableBlock = ({ data, id }: { data: any; id: string }) => (
+export const VariableBlock = memo(({ data, id }: NodeProps) => (
   <NodeWrapper
     color="blue"
     onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
@@ -575,7 +733,7 @@ export const VariableBlock = ({ data, id }: { data: any; id: string }) => (
       </div>
     </div>
   </NodeWrapper>
-);
+));
 
 export const nodeTypes = {
   variableBlock: VariableBlock,
@@ -595,5 +753,4 @@ export const nodeTypes = {
   tryBlock: TryBlock,
   importBlock: ImportBlock,
   numpyArrayBlock: NumpyArrayBlock,
-  matplotlibPlotBlock: MatplotlibPlotBlock,
 }; 

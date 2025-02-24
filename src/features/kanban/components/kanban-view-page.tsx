@@ -1,6 +1,6 @@
 import PageContainer from '@/components/layout/page-container';
 import { Heading } from '@/components/ui/heading';
-import { KanbanBoard } from './kanban-board';
+// import { KanbanBoard } from './kanban-board';
 import NewTaskDialog from './new-task-dialog';
 
 export default function KanbanViewPage() {
@@ -11,7 +11,7 @@ export default function KanbanViewPage() {
           <Heading title={`Kanban`} description='Manage tasks by dnd' />
           <NewTaskDialog />
         </div>
-        <KanbanBoard />
+        {/* <KanbanBoard /> */}
       </div>
     </PageContainer>
   );

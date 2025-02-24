@@ -1,10 +1,10 @@
 {
-  "name": "next-shadcn-dashboard-starter",
+  "name": "py-drag",
   "version": "1.0.0",
   "private": true,
   "author": {
-    "name": "Kiran",
-    "url": "https://github.com/Kiranism"
+    "name": "Melvin",
+    "url": "https://github.com/Xa-vie"
   },
   "scripts": {
     "dev": "next dev --turbopack",
@@ -61,7 +61,7 @@
     "kbar": "^0.1.0-beta.45",
     "lucide-react": "^0.468.0",
     "match-sorter": "^8.0.0",
-    "next": "15.1.0",
+    "next": "15.1.7",
     "next-auth": "^5.0.0-beta.25",
     "next-themes": "^0.4.4",
     "nextjs-toploader": "^3.7.15",
@@ -76,7 +76,7 @@
     "react-py": "^1.11.2",
     "react-responsive": "^10.0.0",
     "sharp": "^0.33.5",
-    "sonner": "^1.7.1",
+    "sonner": "^1.7.4",
     "sort-by": "^1.2.0",
     "tailwind-merge": "^2.5.5",
     "tailwindcss": "^3.4.16",

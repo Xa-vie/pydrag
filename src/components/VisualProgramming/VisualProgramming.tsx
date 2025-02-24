@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useMemo } from 'react';
 import {
   ReactFlow,
   Controls,
@@ -13,6 +13,9 @@ import {
   addEdge,
   Panel,
   useReactFlow,
+  getBezierPath,
+  MarkerType,
+  Position,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Editor } from '@monaco-editor/react';
@@ -20,8 +23,8 @@ import { nodeTypes } from './NodeTypes';
 import { CodeSnippetsPanel } from './CodeSnippets';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card } from '@/components/ui/card';
-import { 
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
   Trash2,
   ZoomIn,
   ZoomOut,
@@ -31,14 +34,17 @@ import {
   Code2,
   Play,
   Loader2,
-  Terminal
+  Terminal,
+  Copy
 } from 'lucide-react';
 import { CodeGeneration } from './CodeGeneration';
 import { usePython } from '@/hooks/usePython';
 import { PythonProvider } from 'react-py';
-import { MarkerType, ReactFlowProvider } from '@xyflow/react';
+import { ReactFlowProvider } from '@xyflow/react';
 import { theme } from 'tailwind.config';
 import { useTheme } from 'next-themes';
+import CodeEditor from './CodeEditor';
+import RunCodeSidebar from './RunCodeSidebar';
 
 let id = 0;
 const getId = () => `${id++}`;
@@ -50,13 +56,98 @@ type NodeWithDepth = {
   parentId?: string;
 };
 
+// Add proper type for the edge props
+interface EdgeProps {
+  id: string;
+  sourceX: number;
+  sourceY: number;
+  targetX: number;
+  targetY: number;
+  sourcePosition: Position;
+  targetPosition: Position;
+  style?: React.CSSProperties;
+  markerEnd?: string;
+}
+
+// Update the CustomEdge component
+const CustomEdge = ({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  style = {},
+  markerEnd,
+}: EdgeProps) => {
+  const [edgePath, labelX, labelY] = getBezierPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+  });
+
+  const { deleteElements } = useReactFlow();
+
+  return (
+    <>
+      <path
+        id={id}
+        style={{
+          ...style,
+          strokeWidth: 2,
+          stroke: 'rgb(100 116 139)', // slate-500
+        }}
+        className="react-flow__edge-path transition-all duration-200 hover:stroke-slate-300"
+        d={edgePath}
+        markerEnd={markerEnd}
+      />
+      <g
+        className="transition-all duration-200"
+        onClick={(e) => {
+          e.stopPropagation();
+          deleteElements({ edges: [{ id }] });
+        }}
+        transform={`translate(${labelX - 12} ${labelY - 12})`}
+      >
+        <rect
+          x="0"
+          y="0"
+          width="24"
+          height="24"
+          rx="6"
+          className="fill-slate-800/50 stroke-slate-700/50 hover:fill-slate-700 hover:stroke-slate-600 transition-all duration-200 cursor-pointer"
+        />
+        <foreignObject
+          width="24"
+          height="24"
+          className="text-slate-400 hover:text-red-400 transition-colors duration-200"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer'
+          }}
+        >
+          <div className="flex items-center justify-center w-full h-full">
+            <Trash2 className="h-4 w-4" />
+          </div>
+        </foreignObject>
+      </g>
+    </>
+  );
+};
+
 export function VisualProgramming() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [code, setCode] = useState<string>('');
+  const { deleteElements } = useReactFlow();
 
   const { runPython, output, error, isLoading, isRunning } = usePython();
-  const { deleteElements } = useReactFlow();
 
   const onNodesChange = useCallback(
     (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -69,7 +160,32 @@ export function VisualProgramming() {
   );
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => {
+      // Allow multiple connections from the same source
+      setEdges((eds) => {
+        // Check if target already has a connection
+        const targetHasConnection = eds.some(edge => edge.target === params.target);
+        
+        // If target already has a connection, don't add new one
+        if (targetHasConnection) {
+          return eds;
+        }
+        
+        // Add the new connection
+        return addEdge({
+          ...params,
+          type: 'default',
+          animated: true,
+          style: { strokeWidth: 2 },
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+            width: 20,
+            height: 20,
+            color: '#64748b',
+          },
+        }, eds);
+      });
+    },
     []
   );
 
@@ -79,10 +195,10 @@ export function VisualProgramming() {
   }, []);
 
   const handleDeleteNode = useCallback(({ nodes: nodesToDelete, edges: edgesToDelete }) => {
-    deleteElements({ 
-      nodes: nodesToDelete, 
-      edges: edgesToDelete || edges.filter(edge => 
-        nodesToDelete?.some(node => 
+    deleteElements({
+      nodes: nodesToDelete,
+      edges: edgesToDelete || edges.filter(edge =>
+        nodesToDelete?.some(node =>
           edge.source === node.id || edge.target === node.id
         )
       )
@@ -123,7 +239,7 @@ export function VisualProgramming() {
 
       const type = event.dataTransfer.getData('application/reactflow/type');
       if (!type) return;
-      
+
       const dataStr = event.dataTransfer.getData('application/reactflow/data') as string;
       const data = JSON.parse(dataStr);
 
@@ -147,6 +263,7 @@ export function VisualProgramming() {
           condition: '',
           variable: '',
           value: '',
+          content: '',
           iterable: '',
           onDelete: handleDeleteNode,
           onMoveUp: () => handleMoveNode(newNode.id, 'up'),
@@ -155,13 +272,14 @@ export function VisualProgramming() {
             setNodes((nds) =>
               nds.map((node) =>
                 node.id === newNode.id
-                  ? { 
-                      ...node, 
-                      data: { 
-                        ...node.data, 
-                        [type === 'ifBlock' || type === 'whileBlock' ? 'condition' : 'variable']: value 
-                      } 
+                  ? {
+                    ...node,
+                    data: {
+                      ...node.data,
+                      [type === 'printBlock' ? 'content' : 
+                       type === 'ifBlock' || type === 'whileBlock' ? 'condition' : 'variable']: value
                     }
+                  }
                   : node
               )
             );
@@ -198,12 +316,12 @@ export function VisualProgramming() {
 
   const getUpdateData = (type: string | undefined, value: string) => {
     if (!type) return {};
-    
+
     switch (type) {
       case 'inputBlock':
         // Parse the input value to separate variable name and prompt
         const [variable, ...promptParts] = value.split('=').map(s => s.trim());
-        return { 
+        return {
           variable: variable || 'x',
           prompt: promptParts.join('=') || 'Enter value: '
         };
@@ -233,34 +351,72 @@ export function VisualProgramming() {
     }
   };
 
-  const onDragStart = (event: React.DragEvent, nodeType: string, data: any) => {
+  const onDragStart = useCallback((event: React.DragEvent, nodeType: string, data: any) => {
     event.dataTransfer.setData('application/reactflow/type', nodeType);
     event.dataTransfer.setData('application/reactflow/data', JSON.stringify(data));
     event.dataTransfer.effectAllowed = 'move';
-  };
+  }, []);
 
   const generateCode = useCallback(() => {
     let pythonCode = '';
     const indentSize = 2;
-    const processed = new Set<string>();
-    
-    nodes.forEach((node) => {
-      if (processed.has(node.id)) return;
-      
-      const indent = ' '.repeat((node.data.depth || 0) * indentSize);
-      processed.add(node.id);
 
+    // Build a map of node relationships and their depths
+    const nodeRelationships = new Map<string, { depth: number; parentIds: string[] }>();
+    const childToParents = new Map<string, string[]>();
+
+    // First pass: Build the parent-child relationships from edges
+    edges.forEach(edge => {
+      const parents = childToParents.get(edge.target) || [];
+      childToParents.set(edge.target, [...parents, edge.source]);
+    });
+
+    // Second pass: Calculate depths by taking maximum depth of parents + 1
+    const calculateDepth = (nodeId: string, visited = new Set<string>()): number => {
+      if (visited.has(nodeId)) return 0;
+      visited.add(nodeId);
+
+      const parents = childToParents.get(nodeId) || [];
+      if (parents.length === 0) return 0;
+
+      const parentDepths = parents.map(parentId => calculateDepth(parentId, visited));
+      return Math.max(...parentDepths) + 1;
+    };
+
+    // Calculate depths for all nodes
+    nodes.forEach(node => {
+      const depth = calculateDepth(node.id);
+      nodeRelationships.set(node.id, {
+        depth,
+        parentIds: childToParents.get(node.id) || []
+      });
+    });
+
+    // Process nodes in order, respecting parent-child relationships
+    const processed = new Set<string>();
+
+    // Helper function to process a node and its children
+    const processNode = (nodeId: string) => {
+      if (processed.has(nodeId)) return;
+
+      const node = nodes.find(n => n.id === nodeId);
+      if (!node) return;
+
+      const nodeInfo = nodeRelationships.get(nodeId);
+      const indent = ' '.repeat((nodeInfo?.depth || 0) * indentSize);
+      processed.add(nodeId);
+
+      // Generate code based on node type with proper indentation
       switch (node.type) {
         case 'inputBlock':
           pythonCode += `${indent}${node.data.variable} = input(${JSON.stringify(node.data.prompt)})\n`;
           break;
         case 'printBlock':
-          pythonCode += `${indent}print("${node.data.content}")\n`;
+          pythonCode += `${indent}print(${JSON.stringify(node.data.content)})\n`;
           break;
         case 'ifBlock':
           if (node.data.condition) {
             pythonCode += `${indent}if ${node.data.condition}:\n`;
-            pythonCode += `${indent}${' '.repeat(indentSize)}pass\n`;
           }
           break;
         case 'forBlock':
@@ -269,178 +425,147 @@ export function VisualProgramming() {
         case 'whileBlock':
           pythonCode += `${indent}while ${node.data.condition}:\n`;
           break;
-        case 'listBlock':
-          pythonCode += `${indent}${node.data.variable} = ${node.data.value}\n`;
-          break;
-        case 'dictBlock':
-          pythonCode += `${indent}${node.data.variable} = ${node.data.value}\n`;
-          break;
-        case 'functionBlock':
-          pythonCode += `${indent}def ${node.data.name}(${node.data.params}):\n`;
-          break;
-        case 'returnBlock':
-          pythonCode += `${indent}return ${node.data.value}\n`;
-          break;
         case 'variableBlock':
           if (node.data.variable && node.data.value !== undefined) {
-            // Handle string values by adding quotes if needed
-            const value = isNaN(Number(node.data.value)) && !node.data.value.startsWith('"') 
+            const value = isNaN(Number(node.data.value)) && !node.data.value.startsWith('"')
               ? `"${node.data.value}"`
               : node.data.value;
             pythonCode += `${indent}${node.data.variable} = ${value}\n`;
           }
           break;
+        // ... other cases
       }
-    });
 
-    setCode(pythonCode);
-  }, [nodes]);
+      // Find and process all children of the current node
+      edges
+        .filter(edge => edge.source === nodeId)
+        .forEach(edge => {
+          processNode(edge.target);
+        });
+    };
+
+    // Start processing from root nodes (nodes with no parents)
+    const rootNodes = nodes.filter(node =>
+      !edges.some(edge => edge.target === node.id)
+    );
+
+    rootNodes.forEach(node => processNode(node.id));
+
+    // Add a default pass statement for empty blocks
+    const lines = pythonCode.split('\n');
+    const processedCode = lines.map((line, index) => {
+      if (line.trim().endsWith(':') &&
+        (index === lines.length - 1 || !lines[index + 1].startsWith(' '))) {
+        const currentDepth = line.search(/\S/);
+        return line + '\n' + ' '.repeat(currentDepth + indentSize) + 'pass';
+      }
+      return line;
+    }).join('\n');
+
+    setCode(processedCode);
+  }, [nodes, edges]);
 
   // Generate code whenever nodes or edges change
   useEffect(() => {
     generateCode();
   }, [nodes, edges, generateCode]);
 
-  const handleRunCode = async () => {
+  const handleRunCode = useCallback(async () => {
     await runPython(code);
-  };
+  }, [code, runPython]);
 
   const { theme } = useTheme();
 
+  // Add the edgeTypes object
+  const edgeTypes = {
+    default: CustomEdge,
+  };
 
   return (
-    <PythonProvider>
-      <div className="flex h-screen bg-slate-900">
-        <div className="w-1/4 h-full border-r border-white/10">
-          <CodeSnippetsPanel onDragStart={onDragStart} />
-        </div>
-        <div className="w-1/2 h-full bg-slate-800 relative">
-          <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            nodeTypes={nodeTypes}
-            fitView
-            className="bg-dot-pattern"
-            colorMode={theme ? theme : 'dark'}
-          >
-            <Background color="#475569" gap={16} size={1} />
-            <Controls 
-              className="bg-slate-800 border-white/10 text-white"
-              showInteractive={false}
-            />
-            <Panel position="top-right" className="bg-slate-800 p-2 rounded-lg border border-white/10">
-              <div className="flex gap-2">
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => {
-                    // TODO: Implement save functionality
-                  }}
-                >
-                  <Save className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => {
-                    // TODO: Implement load functionality
-                  }}
-                >
-                  <FolderOpen className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="text-white hover:bg-white/10"
-                  onClick={() => {
-                    setNodes([]);
-                    setEdges([]);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </Panel>
-          </ReactFlow>
-        </div>
-        <div className="w-1/4 h-full bg-slate-900 flex flex-col">
-          {/* Top Bar with Run Button */}
-          <div className="p-4 border-b border-white/10">
-            <Button 
-              className="w-full bg-green-600 hover:bg-green-700"
-              onClick={handleRunCode}
-              disabled={isLoading || isRunning}
-            >
-              {isRunning ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Running...
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4 mr-2" />
-                  Run Code
-                </>
-              )}
-            </Button>
-          </div>
-
-          {/* Code Editor Section */}
-          <div className="flex-1 min-h-0 p-4 border-b border-white/10">
-            <div className="h-full rounded-lg overflow-hidden">
-              <Editor
-                height="100%"
-                defaultLanguage="python"
-                value={code}
-                theme="vs-dark"
-                options={{
-                  minimap: { enabled: false },
-                  readOnly: true,
-                  fontSize: 14,
-                  lineNumbers: 'on',
-                  renderLineHighlight: 'none',
-                  scrollBeyondLastLine: false,
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Output Section */}
-          <div className="h-2/5 p-4 bg-slate-800/50">
-            <div className="flex items-center gap-2 mb-2 text-sm text-slate-400">
-              <Terminal className="h-4 w-4" />
-              Output
-            </div>
-            <div className="h-[calc(100%-2rem)] rounded-lg bg-slate-800 overflow-auto">
-              {isRunning ? (
-                <div className="flex items-center justify-center h-full text-slate-400">
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  Running code...
-                </div>
-              ) : error ? (
-                <div className="p-4 text-red-400 font-mono text-sm">
-                  <pre className="whitespace-pre-wrap">{error}</pre>
-                </div>
-              ) : output ? (
-                <div className="p-4 text-slate-200 font-mono text-sm">
-                  <pre className="whitespace-pre-wrap">{output}</pre>
-                </div>
-              ) : (
-                <div className="flex items-center justify-center h-full text-slate-400">
-                  <span>No output yet</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+    <div className="flex h-screen bg-slate-900">
+      <div className="w-1/4 h-full border-r border-white/10">
+        <CodeSnippetsPanel onDragStart={onDragStart} />
       </div>
-    </PythonProvider>
+      <div className="w-1/2 h-full bg-slate-800 relative">
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          className="bg-dot-pattern"
+          colorMode={theme as 'light' | 'dark'}
+          defaultEdgeOptions={{
+            type: 'default',
+            animated: true,
+            style: { strokeWidth: 2 },
+            markerEnd: {
+              type: MarkerType.ArrowClosed,
+              width: 20,
+              height: 20,
+              color: '#64748b',
+            },
+          }}
+          connectOnClick={false}
+          snapToGrid={true}
+          snapGrid={[16, 16]}
+          connectionMode="loose"
+          connectingNodesValidator={(source, target) => {
+            if (source === target) {
+              return false;
+            }
+            
+            return true;
+          }}
+        >
+          <Background color="#475569" gap={16} size={1} />
+          <Controls
+            className="bg-slate-800 border-white/10 text-white"
+            showInteractive={false}
+          />
+          <Panel position="top-right" className="bg-slate-800 p-2 rounded-lg border border-white/10">
+            <div className="flex gap-2">
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  // TODO: Implement save functionality
+                }}
+              >
+                <Save className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  // TODO: Implement load functionality
+                }}
+              >
+                <FolderOpen className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-white hover:bg-white/10"
+                onClick={() => {
+                  setNodes([]);
+                  setEdges([]);
+                }}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </Panel>
+        </ReactFlow>
+      </div>
+      <RunCodeSidebar code={code} />
+    </div>
   );
 } 

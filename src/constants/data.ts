@@ -51,8 +51,8 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'Kanban',
-    url: '/dashboard/kanban',
+    title: 'Visual Programming',
+    url: '/dashboard/visual-programming',
     icon: 'kanban',
     shortcut: ['k', 'k'],
     isActive: false,
