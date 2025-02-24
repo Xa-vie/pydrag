@@ -6,8 +6,8 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn Dashboard Starter',
-  description: 'Basic dashboard with Next.js and Shadcn'
+  title: 'Py-Drag',
+  description: 'Py-Drag is a tool that allows you to create and edit Python code using a drag and drop interface.'
 };
 
 export default async function DashboardLayout({

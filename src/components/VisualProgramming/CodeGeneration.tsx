@@ -1,46 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
-import usePyodide from '@/hooks/usePyodide';
+import { PythonProvider } from 'react-py';
+import { usePython } from '@/hooks/usePython';
 
 interface CodeGenerationProps {
   code: string;
 }
 
-export const CodeGeneration: React.FC<CodeGenerationProps> = ({ code }) => {
-  const [output, setOutput] = useState<string>('');
-  const [runError, setRunError] = useState<string | null>(null);
-  const [isRunning, setIsRunning] = useState(false);
-  const { pyodide, loading: isInitializing, error: initError } = usePyodide();
+const PythonRunner: React.FC<CodeGenerationProps> = ({ code }) => {
+  const { runPython, output, error, isLoading, isRunning } = usePython();
 
   const handleRunCode = async () => {
-    if (!pyodide) return;
-
-    setIsRunning(true);
-    setRunError(null);
-    setOutput('');
-
-    try {
-      // Capture stdout
-      let capturedOutput = '';
-      pyodide.setStdout({
-        write: (text: string) => {
-          capturedOutput += text;
-          return text.length;
-        },
-      });
-
-      await pyodide.runPythonAsync(code);
-      setOutput(capturedOutput);
-    } catch (err) {
-      setRunError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setIsRunning(false);
-    }
+    await runPython(code);
   };
-
-  const error = initError || runError;
 
   return (
     <div className="space-y-4">
@@ -55,7 +29,7 @@ export const CodeGeneration: React.FC<CodeGenerationProps> = ({ code }) => {
           <div className="mt-4">
             <Button 
               onClick={handleRunCode} 
-              disabled={isRunning || isInitializing || !pyodide}
+              disabled={isLoading || isRunning}
               className="w-full"
             >
               {isRunning ? (
@@ -63,7 +37,7 @@ export const CodeGeneration: React.FC<CodeGenerationProps> = ({ code }) => {
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Running...
                 </>
-              ) : isInitializing ? (
+              ) : isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Initializing Python...
@@ -91,5 +65,14 @@ export const CodeGeneration: React.FC<CodeGenerationProps> = ({ code }) => {
         </Card>
       )}
     </div>
+  );
+};
+
+// Wrap the component with PythonProvider
+export const CodeGeneration: React.FC<CodeGenerationProps> = (props) => {
+  return (
+    <PythonProvider>
+      <PythonRunner {...props} />
+    </PythonProvider>
   );
 }; 

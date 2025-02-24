@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Variable, GripHorizontal } from "lucide-react";
 
 // Define type for snippet
 interface CodeSnippet {
@@ -22,6 +22,18 @@ interface SnippetsStructure {
 // Define the structure of our code snippets
 const pythonSnippets: SnippetsStructure = {
   'Basic Operations': [
+    {
+      id: 'variable',
+      type: 'variableBlock',
+      label: 'Variable',
+      description: 'Create and assign a value to a variable',
+      initialData: {
+        variable: '',
+        value: '',
+        onChange: undefined,
+        onValueChange: undefined,
+      },
+    },
     {
       id: 'print',
       type: 'printBlock',
@@ -290,14 +302,14 @@ export function CodeSnippetsPanel({ onDragStart }: CodeSnippetsPanelProps) {
     : pythonSnippets;
 
   return (
-    <Card className="w-full h-full border-0">
+    <Card className="w-full h-full border-0 bg-slate-900">
       <CardHeader className="p-4 border-b border-white/10">
-        <CardTitle className="text-white">Python Snippets</CardTitle>
-        <div className="relative">
+        <CardTitle className="text-xl font-semibold text-white">Python Blocks</CardTitle>
+        <div className="relative mt-2">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Search snippets..."
-            className="pl-8 bg-slate-800 border-white/10 text-white"
+            placeholder="Search blocks..."
+            className="pl-8 bg-slate-800/50 border-slate-700 text-white placeholder:text-slate-400 focus:border-slate-600 focus:ring-slate-600"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -307,20 +319,25 @@ export function CodeSnippetsPanel({ onDragStart }: CodeSnippetsPanelProps) {
         <ScrollArea className="h-[calc(100vh-8rem)]">
           <Accordion type="multiple" className="w-full">
             {Object.entries(filteredSnippets).map(([category, snippets]) => (
-              <AccordionItem key={category} value={category} className="border-white/10">
-                <AccordionTrigger className="text-sm font-medium text-white px-4 hover:bg-white/5">
+              <AccordionItem key={category} value={category} className="border-b border-white/10 px-4">
+                <AccordionTrigger className="text-sm font-medium text-white hover:bg-white/5 -mx-4 px-4 py-3">
                   {category}
                 </AccordionTrigger>
-                <AccordionContent className="pb-2">
-                  <div className="grid grid-cols-1 gap-2 p-2">
+                <AccordionContent className="pb-3">
+                  <div className="grid grid-cols-1 gap-2">
                     {snippets.map((snippet) => (
                       <div
                         key={snippet.id}
-                        className="p-3 rounded-md bg-slate-800 cursor-move hover:bg-slate-700 transition-colors group"
+                        className="group p-3 rounded-lg bg-slate-800/50 cursor-move hover:bg-slate-700/50 transition-colors border border-slate-700/50 hover:border-slate-600"
                         draggable
                         onDragStart={(event) => onDragStart(event, snippet.type, snippet.initialData)}
                       >
-                        <p className="font-medium text-white mb-1">{snippet.label}</p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="text-sm font-medium text-white">{snippet.label}</span>
+                          <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                            <GripHorizontal className="h-4 w-4 text-slate-400" />
+                          </div>
+                        </div>
                         <p className="text-xs text-slate-400">{snippet.description}</p>
                       </div>
                     ))}
