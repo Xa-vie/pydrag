@@ -386,3 +386,5 @@ export const CodeSnippetsPanel = memo(({ onDragStart }: CodeSnippetsPanelProps) 
     </Card>
   );
 }); 
+
+CodeSnippetsPanel.displayName = 'CodeSnippetsPanel';

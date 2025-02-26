@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { PythonProvider, usePython as useReactPy } from 'react-py';
+import { usePython as useReactPy } from 'react-py';
 
 export function usePython() {
   const [isReady, setIsReady] = useState(false);
