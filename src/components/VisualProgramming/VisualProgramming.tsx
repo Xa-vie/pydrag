@@ -38,7 +38,6 @@ import {
   Package,
   Table
 } from 'lucide-react';
-import { usePython } from '@/hooks/usePython';
 import { useTheme } from 'next-themes';
 import RunCodeSidebar from './RunCodeSidebar';
 import { PythonProvider } from 'react-py';
@@ -156,8 +155,6 @@ export function VisualProgramming() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [code, setCode] = useState<string>('');
   const { deleteElements } = useReactFlow();
-
-  const { runPython, output, error, isLoading, isRunning } = usePython();
 
   const onNodesChange = useCallback(
     (changes: any) => setNodes((nds) => applyNodeChanges(changes, nds)),
@@ -1414,9 +1411,6 @@ export function VisualProgramming() {
     generateCode();
   }, [nodes, edges, generateCode]);
 
-  const handleRunCode = useCallback(async () => {
-    await runPython(code);
-  }, [code, runPython]);
 
   const { theme } = useTheme();
 
