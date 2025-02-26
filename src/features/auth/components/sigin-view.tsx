@@ -44,7 +44,7 @@ export default function SignInViewPage({ stars }: { stars: number }) {
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
             <p className='text-lg'>
-              &ldquo;PyDrag revolutionized how I test Python code snippets. Just drag, drop, and execute - it's that simple! Perfect for quick prototyping and learning Python.&rdquo;
+              &ldquo;PyDrag revolutionized how I test Python code snippets. Just drag, drop, and execute - it&apos;s that simple! Perfect for quick prototyping and learning Python.&rdquo;
             </p>
             <footer className='text-sm'>Python Developer</footer>
           </blockquote>
