@@ -7,8 +7,8 @@ import Link from 'next/link';
 import UserAuthForm from './user-auth-form';
 
 export const metadata: Metadata = {
-  title: 'Authentication',
-  description: 'Authentication forms built using the components.'
+  title: 'Sign in to PyDrag',
+  description: 'Sign in to PyDrag - The interactive Python code playground with drag-and-drop execution'
 };
 
 export default function SignInViewPage({ stars }: { stars: number }) {
@@ -36,18 +36,17 @@ export default function SignInViewPage({ stars }: { stars: number }) {
             strokeLinejoin='round'
             className='mr-2 h-6 w-6'
           >
-            <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
+            <path d='M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10c5.51 0 10-4.48 10-10S17.51 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'/>
+            <path d='M8 14l4-4 4 4'/>
           </svg>
-          Logo
+          PyDrag
         </div>
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
             <p className='text-lg'>
-              &ldquo;This starter template has saved me countless hours of work
-              and helped me deliver projects to my clients faster than ever
-              before.&rdquo;
+              &ldquo;PyDrag revolutionized how I test Python code snippets. Just drag, drop, and execute - it's that simple! Perfect for quick prototyping and learning Python.&rdquo;
             </p>
-            <footer className='text-sm'>Random Dude</footer>
+            <footer className='text-sm'>Python Developer</footer>
           </blockquote>
         </div>
       </div>
@@ -66,7 +65,7 @@ export default function SignInViewPage({ stars }: { stars: number }) {
           >
             <div className='flex items-center'>
               <GitHubLogoIcon className='size-4' />
-              <span className='ml-1 inline'>Star on GitHub</span>{' '}
+              <span className='ml-1 inline'>Star PyDrag</span>{' '}
             </div>
             <div className='ml-2 flex items-center gap-1 text-sm md:flex'>
               <StarIcon
@@ -78,10 +77,10 @@ export default function SignInViewPage({ stars }: { stars: number }) {
           </Link>
           <div className='flex flex-col space-y-2 text-center'>
             <h1 className='text-2xl font-semibold tracking-tight'>
-              Create an account
+              Welcome to PyDrag
             </h1>
             <p className='text-sm text-muted-foreground'>
-              Enter your email below to create your account
+              Sign in to start running Python code with simple drag and drop
             </p>
           </div>
           <UserAuthForm />

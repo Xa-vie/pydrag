@@ -8,11 +8,9 @@ import { cn } from '@/lib/utils';
 
 interface CodeEditorProps {
   code: string;
-  isRunning: boolean;
-  onRun: () => void;
 }
 
-const CodeEditor = memo(({ code, isRunning, onRun }: CodeEditorProps) => {
+const CodeEditor = memo(({ code }: CodeEditorProps) => {
   return (
     <div className="h-full flex flex-col bg-slate-900 rounded-lg overflow-hidden">
 

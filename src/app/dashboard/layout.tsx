@@ -20,15 +20,15 @@ export default async function DashboardLayout({
   const defaultOpen = cookieStore.get('sidebar:state')?.value === 'true';
   return (
     <KBar>
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar />
-        <SidebarInset>
+      {/* <SidebarProvider defaultOpen={defaultOpen}> */}
+        {/* <AppSidebar /> */}
+        {/* <SidebarInset> */}
           <Header />
           {/* page main content */}
           {children}
           {/* page main content ends */}
-        </SidebarInset>
-      </SidebarProvider>
+        {/* </SidebarInset> */}
+      {/* </SidebarProvider> */}
     </KBar>
   );
 }

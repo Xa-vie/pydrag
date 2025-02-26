@@ -11,6 +11,7 @@ export default function GithubSignInButton() {
 
   return (
     <Button
+      disabled={true}
       className='w-full'
       variant='outline'
       type='button'

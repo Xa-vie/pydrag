@@ -30,7 +30,7 @@ export default async function RootLayout({
         <NextTopLoader showSpinner={false} />
         <NuqsAdapter>
           <Providers session={session}>
-            <Toaster />
+            <Toaster richColors />
             {children}
           </Providers>
         </NuqsAdapter>

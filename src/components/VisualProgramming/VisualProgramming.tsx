@@ -16,6 +16,8 @@ import {
   getBezierPath,
   MarkerType,
   Position,
+  ConnectionMode,
+  NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { nodeTypes } from './NodeTypes';
@@ -39,6 +41,7 @@ import {
 import { usePython } from '@/hooks/usePython';
 import { useTheme } from 'next-themes';
 import RunCodeSidebar from './RunCodeSidebar';
+import { PythonProvider } from 'react-py';
 
 let id = 0;
 const getId = () => `${id++}`;
@@ -136,6 +139,19 @@ const CustomEdge = ({
 };
 
 export function VisualProgramming() {
+
+  // useEffect(() => {
+  //   navigator.serviceWorker
+  //     .register('/react-py-sw.js')
+  //     .then((registration) =>
+  //       console.log(
+  //         'Service Worker registration successful with scope: ',
+  //         registration.scope
+  //       )
+  //     )
+  //     .catch((err) => console.log('Service Worker registration failed: ', err))
+  // }, [])
+  
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [code, setCode] = useState<string>('');
@@ -1313,12 +1329,12 @@ export function VisualProgramming() {
           break;
         
         case 'flaskApiBlock':
-          if (data.route && data.name) {
-            const method = data.method || 'GET';
-            const responseModel = data.responseModel ? ` -> ${data.responseModel}` : '';
+          if (node.data.route && node.data.name) {
+            const method = node.data.method || 'GET';
+            const responseModel = node.data.responseModel ? ` -> ${node.data.responseModel}` : '';
             
-            pythonCode += `${indent}@app.${method.toLowerCase()}("${data.route}"${responseModel})\n`;
-            pythonCode += `${indent}async def ${data.name}():\n`;
+            pythonCode += `${indent}@app.${method.toLowerCase()}("${node.data.route}"${responseModel})\n`;
+            pythonCode += `${indent}async def ${node.data.name}():\n`;
             
             if (method === 'GET') {
               pythonCode += `${indent}  # Process GET request\n`;
@@ -1337,29 +1353,29 @@ export function VisualProgramming() {
           break;
         
         case 'httpRequestBlock':
-          if (data.variable && data.url) {
-            const method = data.method || 'GET';
+          if (node.data.variable && node.data.url) {
+            const method = node.data.method || 'GET';
             pythonCode += `${indent}import requests\n`;
             
             if (method === 'GET') {
-              pythonCode += `${indent}${data.variable} = requests.get('${data.url}')\n`;
+              pythonCode += `${indent}${node.data.variable} = requests.get('${node.data.url}')\n`;
             } else if (method === 'POST') {
-              const jsonData = data.data || '{}';
-              pythonCode += `${indent}${data.variable} = requests.post('${data.url}', json=${jsonData})\n`;
+              const jsonData = node.data.data || '{}';
+              pythonCode += `${indent}${node.data.variable} = requests.post('${node.data.url}', json=${jsonData})\n`;
             } else if (method === 'PUT') {
-              const jsonData = data.data || '{}';
-              pythonCode += `${indent}${data.variable} = requests.put('${data.url}', json=${jsonData})\n`;
+              const jsonData = node.data.data || '{}';
+              pythonCode += `${indent}${node.data.variable} = requests.put('${node.data.url}', json=${jsonData})\n`;
             } else if (method === 'DELETE') {
-              pythonCode += `${indent}${data.variable} = requests.delete('${data.url}')\n`;
+              pythonCode += `${indent}${node.data.variable} = requests.delete('${node.data.url}')\n`;
             }
           }
           break;
         
         case 'sqlQueryBlock':
-          if (data.connection && data.variable && data.query) {
-            pythonCode += `${indent}cursor = ${data.connection}.cursor()\n`;
-            pythonCode += `${indent}cursor.execute("""${data.query}""")\n`;
-            pythonCode += `${indent}${data.variable} = cursor.fetchall()\n`;
+          if (node.data.connection && node.data.variable && node.data.query) {
+            pythonCode += `${indent}cursor = ${node.data.connection}.cursor()\n`;
+            pythonCode += `${indent}cursor.execute("""${node.data.query}""")\n`;
+            pythonCode += `${indent}${node.data.variable} = cursor.fetchall()\n`;
           }
           break;
       }
@@ -1443,11 +1459,10 @@ export function VisualProgramming() {
           snapToGrid={true}
           snapGrid={[16, 16]}
           connectionMode="loose"
-          connectingNodesValidator={(source, target) => {
-            if (source === target) {
+          isValidConnection={(connection) => {
+            if (connection.source === connection.target) {
               return false;
             }
-            
             return true;
           }}
         >
@@ -1493,7 +1508,9 @@ export function VisualProgramming() {
           </Panel>
         </ReactFlow>
       </div>
-      <RunCodeSidebar code={code} />
+      <PythonProvider>
+        <RunCodeSidebar code={code} />
+      </PythonProvider>
     </div>
   );
 } 
