@@ -152,12 +152,8 @@ interface ForLoopNodeData extends Record<string, unknown> {
 interface VariableNodeData extends Record<string, unknown> {
   type: 'variable';
   label: string;
-  value?: string;
-  updateValue?: (value: string) => void;
   name?: string;
-  isReference?: boolean;
-  referencedVariable?: string;
-  dataType?: 'string' | 'number' | 'boolean' | 'list';
+  value?: string;
 }
 
 interface DatabaseNodeData extends Record<string, unknown> {
@@ -338,7 +334,7 @@ const IfNode = memo(({ data, id, selected }: NodeComponentProps<IfNodeData>) => 
     >
       <Handle 
         type="target" 
-        position={Position.Left} 
+        position={Position.Top} 
         className="!w-3 !h-3 !bg-muted-foreground/50 hover:!bg-muted-foreground transition-colors"
         id="in"
       />
@@ -524,7 +520,12 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
   const setVariable = useFlowStore(state => state.setVariable);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
-  const availableVariables = getAllVariables();
+  
+  // Filter out the current variable from available variables
+  const availableVariables = useMemo(() => {
+    const allVars = getAllVariables();
+    return allVars.filter(varName => varName !== data.name);
+  }, [getAllVariables, data.name]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newName = e.target.value.trim();
@@ -536,16 +537,6 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     if (newName) {
       setVariable(newName, data.value || '', id);
     }
-  };
-
-  const handleDataTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newType = e.target.value as VariableNodeData['dataType'];
-    const newData: VariableNodeData = {
-      ...data,
-      dataType: newType,
-      value: ''
-    };
-    updateNode(id, newData);
   };
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -583,49 +574,6 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     }, 0);
   };
 
-  // Group variables by their data types
-  const groupedVariables = useMemo(() => {
-    const groups: Record<string, { name: string; value: string; type: string }[]> = {
-      number: [],
-      string: [],
-      boolean: [],
-      list: [],
-      other: []
-    };
-
-    availableVariables.forEach(varName => {
-      if (varName === data.name) return; // Skip current variable
-      const value = getVariable(varName) || '';
-      let type = 'other';
-
-      // Determine type based on value
-      if (!isNaN(Number(value))) type = 'number';
-      else if (value === 'true' || value === 'false') type = 'boolean';
-      else if (value.startsWith('[') && value.endsWith(']')) type = 'list';
-      else if (typeof value === 'string') type = 'string';
-
-      groups[type].push({ name: varName, value, type });
-    });
-
-    return groups;
-  }, [availableVariables, data.name, getVariable]);
-
-  // Get placeholder text based on data type
-  const getPlaceholder = () => {
-    switch (data.dataType) {
-      case 'number':
-        return 'Enter number or expression (e.g., x + 1)';
-      case 'boolean':
-        return 'true or false';
-      case 'list':
-        return '[1, 2, 3] or ["a", "b", "c"]';
-      case 'string':
-        return 'Enter text value';
-      default:
-        return 'Enter value';
-    }
-  };
-
   return (
     <NodeWrapper 
       onDelete={() => deleteNode(id)}
@@ -651,101 +599,43 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
           />
         </div>
 
-        {/* Data Type Selector */}
-        <div className="space-y-1">
-          <label className="text-xs text-muted-foreground">Data Type:</label>
-          <div className="flex flex-wrap gap-1">
-            <button
-              onClick={() => handleDataTypeChange({ target: { value: 'string' } } as any)}
-              className={clsx(
-                "text-[10px] px-1.5 py-0.5 rounded-sm transition-colors",
-                data.dataType === 'string' 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted hover:bg-muted/80"
-              )}
-              title="Text values like 'hello'"
-            >
-              String
-            </button>
-            <button
-              onClick={() => handleDataTypeChange({ target: { value: 'number' } } as any)}
-              className={clsx(
-                "text-[10px] px-1.5 py-0.5 rounded-sm transition-colors",
-                data.dataType === 'number' 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted hover:bg-muted/80"
-              )}
-              title="Numeric values and expressions"
-            >
-              Number
-            </button>
-            <button
-              onClick={() => handleDataTypeChange({ target: { value: 'boolean' } } as any)}
-              className={clsx(
-                "text-[10px] px-1.5 py-0.5 rounded-sm transition-colors",
-                data.dataType === 'boolean' 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted hover:bg-muted/80"
-              )}
-              title="True or False"
-            >
-              Boolean
-            </button>
-            <button
-              onClick={() => handleDataTypeChange({ target: { value: 'list' } } as any)}
-              className={clsx(
-                "text-[10px] px-1.5 py-0.5 rounded-sm transition-colors",
-                data.dataType === 'list' 
-                  ? "bg-primary text-primary-foreground" 
-                  : "bg-muted hover:bg-muted/80"
-              )}
-              title="Array like [1, 2, 3]"
-            >
-              List
-            </button>
-          </div>
-        </div>
-
         {/* Value Input with Variable Suggestions */}
         <div className="space-y-2">
           <label className="text-xs text-muted-foreground">Value or Expression</label>
           <div>
             <input
               id={`variable-value-${id}`}
-            value={data.value || ''}
+              value={data.value || ''}
               onChange={handleValueChange}
-              placeholder={getPlaceholder()}
+              placeholder="Enter value (e.g. 42, 'hello', x + 1)"
               className="w-full rounded-md border bg-background px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-          />
-        </div>
+            />
+          </div>
 
-          {/* Available Variables Grouped by Type */}
-          {Object.entries(groupedVariables).map(([type, variables]) => 
-            variables.length > 0 && (
-              <div key={type} className="space-y-1">
-                <p className="text-[10px] text-muted-foreground capitalize">
-                  {type} variables:
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  {variables.map(({ name, value }) => (
+          {/* Available Variables */}
+          {availableVariables.length > 0 && (
+            <div className="space-y-1">
+              <p className="text-[10px] text-muted-foreground">Available variables:</p>
+              <div className="flex flex-wrap gap-1">
+                {availableVariables.map(varName => {
+                  const value = getVariable(varName);
+                  return (
                     <button
-                      key={name}
-                      onClick={() => insertVariable(name)}
+                      key={varName}
+                      onClick={() => insertVariable(varName)}
                       className="text-[10px] px-1.5 py-0.5 rounded-sm bg-muted hover:bg-muted/80 transition-colors"
-                      title={`${name} = ${value}`}
+                      title={`${varName} = ${value}`}
                     >
-                      {name}
+                      {varName}
                     </button>
-                  ))}
-      </div>
+                  );
+                })}
               </div>
-            )
+            </div>
           )}
 
           <div className="text-[10px] text-muted-foreground">
-            {data.dataType === 'number' 
-              ? "Use variables and arithmetic operators (e.g. x + 1, y * 2)"
-              : "Enter a value or click variables above to use them"}
+            Enter a value or click variables above to use them in expressions
           </div>
         </div>
       </div>
@@ -1073,26 +963,18 @@ const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: Node<No
     case 'variable':
       if (isVariableNodeData(node.data)) {
         const name = node.data.name || 'variable';
-        if (node.data.isReference && node.data.referencedVariable) {
-          return `${spaces}${name} = ${node.data.referencedVariable}`;
+        const value = node.data.value || 'None';
+        
+        // Try to infer if the value is a number, boolean, or expression
+        if (value === 'true' || value === 'false') {
+          return `${spaces}${name} = ${value.toLowerCase()}`;
+        } else if (!isNaN(Number(value))) {
+          return `${spaces}${name} = ${value}`;
+        } else if (value.includes('+') || value.includes('-') || value.includes('*') || value.includes('/') || 
+                  allVariables.some(v => value.includes(v))) {
+          return `${spaces}${name} = ${value}`;
         } else {
-          const value = node.data.value || 'None';
-          switch (node.data.dataType) {
-            case 'number':
-              return `${spaces}${name} = ${value}`;
-            case 'boolean':
-              return `${spaces}${name} = ${value.toLowerCase()}`;
-            case 'list':
-              return `${spaces}${name} = ${value}`;
-            case 'string':
-              if (isValidExpression(value, allVariables)) {
-                return `${spaces}${name} = ${value}`;
-              } else {
-                return `${spaces}${name} = "${value}"`;
-              }
-            default:
-              return `${spaces}${name} = "${value}"`;
-          }
+          return `${spaces}${name} = "${value}"`;
         }
       }
       return `${spaces}variable = None`;
@@ -1480,7 +1362,7 @@ export function CodeFlow() {
           // fitView
           proOptions={{ hideAttribution: true }}
           
-            // colorMode={theme  === 'dark' ? 'dark' : 'light'} 
+            colorMode={theme  === 'dark' ? 'dark' : 'light'} 
         >
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Controls />

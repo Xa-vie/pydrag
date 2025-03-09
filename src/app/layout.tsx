@@ -24,7 +24,7 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   return (
-    <html lang='en' className={`${lato.className}`} >
+    <html lang='en' suppressHydrationWarning className={`${lato.className}`} >
       <body className={'overflow-hidden'}>
         <NextTopLoader showSpinner={false} />
         {/* <NuqsAdapter> */}
