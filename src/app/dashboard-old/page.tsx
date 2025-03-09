@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { ReactFlowProvider } from '@xyflow/react';
-import { CodeFlow } from '@/components/codeflow/code-flow';
+import { VisualProgramming } from '@/components/VisualProgramming/VisualProgramming';
 
 export default async function Dashboard() {
   const session = await auth();
@@ -10,9 +10,9 @@ export default async function Dashboard() {
     return redirect('/signin');
   } else {
     return (
-      <div className="h-full w-full" suppressHydrationWarning>
+      <div className="h-full w-full">
         <ReactFlowProvider>
-          <CodeFlow />
+          <VisualProgramming />
         </ReactFlowProvider>
       </div>
     );

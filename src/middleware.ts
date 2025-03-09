@@ -8,10 +8,24 @@ import authConfig from '@/lib/auth.config';
 const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
-  if (!req.auth) {
-    const url = req.url.replace(req.nextUrl.pathname, '/');
-    return Response.redirect(url);
+  const isAuth = !!req.auth;
+  const isAuthPage = req.nextUrl.pathname.startsWith('/signin');
+  const isDashboardPage = req.nextUrl.pathname.startsWith('/dashboard');
+
+  // Redirect authenticated users away from auth pages
+  if (isAuth && isAuthPage) {
+    return Response.redirect(new URL('/dashboard', req.url));
   }
+
+  // Redirect unauthenticated users away from protected pages
+  if (!isAuth && isDashboardPage) {
+    return Response.redirect(new URL('/signin', req.url));
+  }
+
+  return null;
 });
 
-export const config = { matcher: ['/dashboard/:path*'] };
+// Update the matcher to include both auth and dashboard paths
+export const config = {
+  matcher: ['/signin', '/dashboard/:path*']
+};

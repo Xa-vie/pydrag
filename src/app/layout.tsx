@@ -1,11 +1,10 @@
 import { auth } from '@/lib/auth';
 import Providers from '@/components/layout/providers';
-import { Toaster } from '@/components/ui/sonner';
 import type { Metadata } from 'next';
-import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Lato } from 'next/font/google';
 import NextTopLoader from 'nextjs-toploader';
 import './globals.css';
+import Header from '@/components/layout/header';
 
 export const metadata: Metadata = {
   title: 'Next Shadcn',
@@ -25,15 +24,15 @@ export default async function RootLayout({
 }) {
   const session = await auth();
   return (
-    <html lang='en' className={`${lato.className}`} suppressHydrationWarning>
+    <html lang='en' className={`${lato.className}`} >
       <body className={'overflow-hidden'}>
         <NextTopLoader showSpinner={false} />
-        <NuqsAdapter>
+        {/* <NuqsAdapter> */}
           <Providers session={session}>
-            <Toaster richColors />
+            {/* <Toaster /> */}
             {children}
           </Providers>
-        </NuqsAdapter>
+        {/* </NuqsAdapter> */}
         {/* <script
           crossOrigin="anonymous"
           src="//unpkg.com/react-scan/dist/auto.global.js"
