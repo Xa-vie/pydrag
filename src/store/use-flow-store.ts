@@ -177,7 +177,7 @@ const initialNodes: Node<NodeData>[] = [
     data: {
       type: 'annotation',
       level: '1',
-      label: '# A simple Hello World program',
+      label: 'A simple Hello World program',
       arrowStyle: {},
       generateComment: true
     }
