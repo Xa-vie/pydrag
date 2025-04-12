@@ -49,6 +49,8 @@ export interface FunctionNodeData extends BaseNodeData {
   type: 'function';
   internalNodes: Node<NodeData>[];
   internalEdges: Edge[];
+  parameters: string[];
+  returnValue: boolean;
 }
 
 export interface PrintNodeData extends BaseNodeData {
@@ -56,7 +58,30 @@ export interface PrintNodeData extends BaseNodeData {
   message?: string;
 }
 
-export type NodeData = IfNodeData | ForLoopNodeData | VariableNodeData | DatabaseNodeData | FunctionNodeData | PrintNodeData;
+export interface AnnotationNodeData extends BaseNodeData {
+  type: 'annotation';
+  level: string;
+  label: string;
+  arrowStyle?: { [key: string]: string };
+  generateComment: boolean;
+}
+
+export interface FunctionCallNodeData extends BaseNodeData {
+  type: 'functionCall';
+  label: string;
+  functionName: string;
+  arguments: string[];
+}
+
+export type NodeData = 
+  | IfNodeData 
+  | ForLoopNodeData 
+  | VariableNodeData 
+  | DatabaseNodeData 
+  | FunctionNodeData 
+  | PrintNodeData
+  | AnnotationNodeData
+  | FunctionCallNodeData;
 
 interface FlowState {
   nodes: Node<NodeData>[];
@@ -85,46 +110,93 @@ const createInitialNodeData = (type: string): NodeData => {
         label: 'If Condition',
         condition: '',
         elifConditions: [],
-        hasElse: false
+        hasElse: false,
+        generateComment: false
       };
     case 'forLoop':
       return {
         type: 'forLoop' as const,
         label: 'For Loop',
-        condition: ''
+        condition: '',
+        generateComment: false
       };
     case 'variable':
       return {
         type: 'variable' as const,
         label: 'Variable',
-        value: ''
+        value: '',
+        generateComment: false
       };
     case 'database':
       return {
         type: 'database' as const,
         label: 'Database',
-        query: ''
+        query: '',
+        generateComment: false
       };
     case 'function':
       return {
         type: 'function' as const,
         label: 'Function',
         internalNodes: [],
-        internalEdges: []
+        internalEdges: [],
+        parameters: [],
+        returnValue: false,
+        generateComment: false
+      };
+    case 'annotation':
+      return {
+        type: 'annotation' as const,
+        label: 'Annotation',
+        level: '1',
+        arrowStyle: {},
+        generateComment: false
       };
     case 'print':
     default:
       return {
         type: 'print' as const,
         label: 'Print',
-        message: ''
+        message: '',
+        generateComment: false
       };
   }
 };
 
+// Add initial edges
+const initialEdges: Edge[] = [
+
+];
+
+// Initial nodes with annotations and examples
+const initialNodes: Node<NodeData>[] = [
+  {
+    id: 'comment1',
+    type: 'annotation',
+    position: { x: 100, y: 100 },
+    data: {
+      type: 'annotation',
+      level: '1',
+      label: '# A simple Hello World program',
+      arrowStyle: {},
+      generateComment: true
+    }
+  },
+  {
+    id: 'print1',
+    type: 'print',
+    position: { x: 100, y: 350 },
+    data: {
+      type: 'print',
+      label: 'Print',
+      message: 'Hello, World!'
+    }
+  }
+];
+
 export const useFlowStore = create<FlowState>((set, get) => ({
-  nodes: [],
-  edges: [],
+  nodes: [...initialNodes],
+  edges: [...initialEdges],
   selectedNodes: [],
   variables: new Map(),
   onNodesChange: (changes: NodeChange[]) => {

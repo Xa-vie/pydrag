@@ -3,7 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
-import { Search, Variable, Lightbulb, Database, FunctionSquare, FileText, AlertTriangle, Box, Sigma, LineChart, GripHorizontal, Repeat2 } from "lucide-react";
+import { Search, Variable, Lightbulb, Database, FunctionSquare, FileText, AlertTriangle, Box, Sigma, LineChart, GripHorizontal, Repeat2, Code2, Terminal } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Define type for snippet
 interface CodeSnippet {
@@ -298,6 +301,7 @@ interface CodeSnippetsPanelProps {
 
 export const CodeSnippetsPanel = memo(({ onDragStart }: CodeSnippetsPanelProps) => {
   const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
 
   const filteredSnippets = searchTerm
     ? Object.entries(pythonSnippets).reduce((acc, [category, snippets]) => {
@@ -313,77 +317,105 @@ export const CodeSnippetsPanel = memo(({ onDragStart }: CodeSnippetsPanelProps) 
     : pythonSnippets;
 
   return (
-    <Card className="w-full h-full border-0 bg-slate-900 rounded-none">
-      <CardHeader className="p-4 border-b border-white/10 bg-slate-800/50">
-        <div className="flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5 text-purple-400" />
-            <CardTitle className="text-lg font-semibold text-white">Code Blocks</CardTitle>
-          </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-            <Input
-              placeholder="Search blocks..."
-              className="pl-9 bg-slate-800 border-slate-700 text-sm text-white placeholder:text-slate-400 focus:border-purple-400 focus:ring-purple-400 rounded-lg"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-[calc(100vh-10rem)]">
-          <Accordion type="multiple" className="w-full">
-            {Object.entries(filteredSnippets).map(([category, snippets]) => (
-              <AccordionItem 
-                key={category} 
-                value={category} 
-                className="border-b border-white/10 group"
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+    <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+      <PopoverTrigger asChild>
+        
+              <Button 
+                variant="outline" 
+                size="icon"
+                className="h-10 w-10 rounded-lg bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 hover:text-white border border-slate-700 hover:border-slate-600 shadow-sm transition-all duration-200 ease-in-out"
               >
-                <AccordionTrigger className="text-sm font-medium text-white hover:bg-slate-800/30 transition-colors px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <span className="text-purple-400">
-                      {CATEGORY_ICONS[category]}
-                    </span>
-                    {category}
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="pb-3 px-4">
-                  <div className="grid grid-cols-1 gap-2">
-                    {snippets.map((snippet) => (
-                      <div
-                        key={snippet.id}
-                        className="p-3 rounded-lg bg-slate-800/50 cursor-move hover:bg-slate-700/30 transition-all border border-slate-700/50 hover:border-purple-400/30 relative group/item"
-                        draggable
-                        onDragStart={(event) => onDragStart(event, snippet.type, snippet.initialData)}
-                      >
-                        <div className="flex items-start gap-2">
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-1.5">
-                              <span className="text-sm font-medium text-white">
-                                {snippet.label}
-                              </span>
-                              <span className="text-xs text-purple-400/80 font-mono px-1.5 py-0.5 bg-purple-400/10 rounded">
-                                {snippet.type.replace('Block', '')}
-                              </span>
+                <Terminal className="w-4.5 h-4.5" />
+              </Button>
+            </PopoverTrigger>
+
+            </TooltipTrigger>
+            <TooltipContent side="right" className="bg-slate-800 text-slate-200 border-slate-700">
+              <p>Click to open code blocks. Drag blocks to canvas</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      <PopoverContent 
+        side="bottom" 
+        align="start" 
+        className="w-80 p-0 bg-slate-900 border-slate-800 shadow-2xl"
+      >
+        <div className="flex flex-col h-[600px]">
+          <div className="p-4 border-b border-white/10 bg-slate-800/50">
+            <div className="flex items-center gap-2 mb-3">
+              <Lightbulb className="h-5 w-5 text-slate-400" />
+              <h3 className="text-lg font-semibold text-white">Code Blocks</h3>
+            </div>
+            <p className="text-sm text-slate-400 mb-3">Drag and drop blocks onto the canvas to build your program</p>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <Input
+                placeholder="Search blocks..."
+                className="pl-9 bg-slate-800 border-slate-700 text-sm text-white placeholder:text-slate-400 focus:border-purple-400 focus:ring-purple-400 rounded-lg"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
+          <ScrollArea className="flex-1">
+            <Accordion type="multiple" className="w-full">
+              {Object.entries(filteredSnippets).map(([category, snippets]) => (
+                <AccordionItem 
+                  key={category} 
+                  value={category} 
+                  className="border-b border-white/10 group"
+                >
+                  <AccordionTrigger className="text-sm font-medium text-white hover:bg-slate-800/30 transition-colors px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <span className="text-purple-400">
+                        {CATEGORY_ICONS[category]}
+                      </span>
+                      {category}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3 px-4">
+                    <div className="grid grid-cols-1 gap-2">
+                      {snippets.map((snippet) => (
+                        <div
+                          key={snippet.id}
+                          className="p-3 rounded-lg bg-slate-800/50 cursor-move hover:bg-slate-700/30 transition-all border border-slate-700/50 hover:border-purple-400/30 relative group/item"
+                          draggable
+                          onDragStart={(event) => {
+                            onDragStart(event, snippet.type, snippet.initialData);
+                            setIsOpen(false);
+                          }}
+                        >
+                          <div className="flex items-start gap-2">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1.5">
+                                <span className="text-sm font-medium text-white">
+                                  {snippet.label}
+                                </span>
+                                <span className="text-xs text-purple-400/80 font-mono px-1.5 py-0.5 bg-purple-400/10 rounded">
+                                  {snippet.type.replace('Block', '')}
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-400 leading-snug">
+                                {snippet.description}
+                              </p>
                             </div>
-                            <p className="text-xs text-slate-400 leading-snug">
-                              {snippet.description}
-                            </p>
+                            <GripHorizontal className="h-4 w-4 text-slate-500 mt-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity" />
                           </div>
-                          <GripHorizontal className="h-4 w-4 text-slate-500 mt-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity" />
+                          <div className="absolute inset-0 rounded-lg transition-all -z-10 group-hover/item:bg-purple-400/5" />
                         </div>
-                        <div className="absolute inset-0 rounded-lg transition-all -z-10 group-hover/item:bg-purple-400/5" />
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </ScrollArea>
-      </CardContent>
-    </Card>
+                      ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </ScrollArea>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }); 
 

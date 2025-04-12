@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 const nodeStyles = {
   base: "shadow-lg border-0 transition-all duration-200 hover:shadow-2xl rounded-lg bg-white dark:bg-slate-900",
-  handle: "w-3 h-3 bg-slate-400 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-400 transition-colors duration-200 rounded-full",
+  handle: "!w-3 !h-3 bg-slate-400 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-400 transition-colors duration-200 rounded-full",
   input: "bg-gray-100 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-md focus:ring-1 focus:ring-offset-0 focus:border-primary-500 dark:focus:border-primary-400 transition-colors duration-200 text-sm",
   header: "py-2 px-3 flex flex-col space-y-1",
   content: "p-3 pt-2",
@@ -54,17 +54,8 @@ interface NodeProps {
     onDelete?: (params: { nodes: { id: string }[] }) => void;
     onMoveUp?: () => void;
     onMoveDown?: () => void;
-    onChange?: (value: string) => void;
-    onValueChange?: (value: string) => void;
-    onIterableChange?: (value: string) => void;
-    onPromptChange?: (value: string) => void;
-    onParamsChange?: (value: string) => void;
-    onErrorChange?: (value: string) => void;
-    onExpressionChange?: (value: string) => void;
-    onFilenameChange?: (value: string) => void;
-    onModeChange?: (value: string) => void;
-    onAliasChange?: (value: string) => void;
-    onTypeChange?: (value: string) => void;
+    updateProperty?: (propertyName: string, value: any) => void;
+    // Keep basic properties that are used across multiple node types
     variable?: string;
     value?: string;
     condition?: string;
@@ -83,88 +74,50 @@ interface NodeProps {
     position?: number;
     totalNodes?: number;
     conditions?: string[];
-    onConditionsChange?: (conditions: string[]) => void;
     variableType?: string;
     printItems?: string[];
-    onPrintItemsChange?: (items: string[]) => void;
     loopType?: string;
     start?: string;
     end?: string;
     step?: string;
     indexVar?: string;
-    onLoopTypeChange?: (value: string) => void;
-    onStartChange?: (value: string) => void;
-    onEndChange?: (value: string) => void;
-    onStepChange?: (value: string) => void;
     useCounter?: boolean;
     counterVar?: string;
     counterInit?: string;
     counterIncrement?: string;
-    onUseCounterChange?: (useCounter: boolean) => void;
-    onCounterVarChange?: (value: string) => void;
-    onCounterInitChange?: (value: string) => void;
-    onCounterIncrementChange?: (value: string) => void;
     showDocstring?: boolean;
-    onShowDocstringChange?: (showDocstring: boolean) => void;
     returnType?: string;
-    onReturnTypeChange?: (returnType: string) => void;
     docstring?: string;
-    onDocstringChange?: (docstring: string) => void;
     items?: string[];
-    onItemsChange?: (items: string[]) => void;
     operation?: string;
     appendValue?: string;
-    onAppendValueChange?: (value: string) => void;
     insertIndex?: string;
-    onInsertIndexChange?: (value: string) => void;
     insertValue?: string;
-    onInsertValueChange?: (value: string) => void;
     removeValue?: string;
-    onRemoveValueChange?: (value: string) => void;
     popIndex?: string;
-    onPopIndexChange?: (value: string) => void;
     reverseSort?: boolean;
-    onReverseSortChange?: (reverseSort: boolean) => void;
     keyValuePairs?: { key: string, value: string }[];
-    onKeyValuePairsChange?: (pairs: { key: string, value: string }[]) => void;
     updateKey?: string;
-    onUpdateKeyChange?: (key: string) => void;
     updateValue?: string;
-    onUpdateValueChange?: (value: string) => void;
     getKey?: string;
-    onGetKeyChange?: (key: string) => void;
     deleteKey?: string;
-    onDeleteKeyChange?: (key: string) => void;
     setItems?: string[];
-    onSetItemsChange?: (items: string[]) => void;
     addItem?: string;
-    onAddItemChange?: (value: string) => void;
     removeItem?: string;
-    onRemoveItemChange?: (value: string) => void;
     otherSet?: string;
-    onOtherSetChange?: (value: string) => void;
     tupleItems?: string[];
-    onTupleItemsChange?: (items: string[]) => void;
     accessIndex?: string;
-    onAccessIndexChange?: (value: string) => void;
     countValue?: string;
-    onCountValueChange?: (value: string) => void;
     findValue?: string;
-    onFindValueChange?: (value: string) => void;
     method?: string;
-    onMethodChange?: (value: string) => void;
     route?: string;
-    onRouteChange?: (value: string) => void;
     data?: string;
-    onDataChange?: (value: string) => void;
     url?: string;
-    onUrlChange?: (value: string) => void;
     query?: string;
-    onQueryChange?: (value: string) => void;
     connection?: string;
-    onConnectionChange?: (value: string) => void;
     responseModel?: string;
-    onResponseModelChange?: (value: string) => void;
+    availableVariables?: string[];
+    handleDataChange?: (propertyName: string, value: any) => void;
   };
   id: string;
 }
@@ -263,21 +216,21 @@ export const IfBlock = memo(({ data, id }: NodeProps) => {
   const addCondition = () => {
     const newConditions = [...conditions, ''];
     setConditions(newConditions);
-    data.onConditionsChange?.(newConditions);
+    data.updateProperty?.('conditions', newConditions);
   };
 
   const removeCondition = (index: number) => {
     if (conditions.length <= 1) return;
     const newConditions = conditions.filter((_, i) => i !== index);
     setConditions(newConditions);
-    data.onConditionsChange?.(newConditions);
+    data.updateProperty?.('conditions', newConditions);
   };
 
   const updateCondition = (index: number, value: string) => {
     const newConditions = [...conditions];
     newConditions[index] = value;
     setConditions(newConditions);
-    data.onConditionsChange?.(newConditions);
+    data.updateProperty?.('conditions', newConditions);
   };
 
   return (
@@ -349,22 +302,36 @@ export const PrintBlock = memo(({ data, id }: NodeProps) => {
   const addPrintItem = () => {
     const newItems = [...printItems, ''];
     setPrintItems(newItems);
-    data.onPrintItemsChange?.(newItems);
+    data.updateProperty?.('printItems', newItems);
   };
 
   const removePrintItem = (index: number) => {
     if (printItems.length <= 1) return;
     const newItems = printItems.filter((_, i) => i !== index);
     setPrintItems(newItems);
-    data.onPrintItemsChange?.(newItems);
+    data.updateProperty?.('printItems', newItems);
   };
 
   const updatePrintItem = (index: number, value: string) => {
     const newItems = [...printItems];
     newItems[index] = value;
     setPrintItems(newItems);
-    data.onPrintItemsChange?.(newItems);
+    data.updateProperty?.('printItems', newItems);
   };
+
+  // Common text templates
+  const textTemplates = [
+    "Hello, World!",
+    "The value is:",
+    "Result:",
+    "Count:",
+    "Total:",
+    "Current value:",
+    "Processing...",
+    "Done!",
+    "Error:",
+    "Success!"
+  ];
 
   return (
     <NodeWrapper
@@ -372,55 +339,116 @@ export const PrintBlock = memo(({ data, id }: NodeProps) => {
       onDelete={() => data.onDelete?.({ nodes: [{ id }] })}
       onMoveUp={data.onMoveUp}
       onMoveDown={data.onMoveDown}
-      info="Outputs text or variable values to the console"
       title="Print"
-      position={data.position}
-      totalNodes={data.totalNodes}
+      info="Print values or variables to the console"
     >
-      <>
-        <Printer className={cn("h-4 w-4", getNodeColors("green").icon)} />
-      </>
-      <div className="space-y-3">
-        <div>
-          <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
-          <div className="space-y-2">
-            {printItems.map((item, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <div className="flex-1 space-y-1">
-                  <label className={nodeStyles.label}>
-                    {index === 0 ? 'Output Content' : `Additional Item ${index}`}
-                  </label>
-                  <Input
-                    value={item}
-                    onChange={(e) => updatePrintItem(index, e.target.value)}
-                    placeholder="Text or variable to print..."
-                    className={cn(nodeStyles.input, getNodeColors("green").ring)}
-                  />
-                </div>
-                {printItems.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 mt-6 text-slate-400 hover:text-red-500"
-                    onClick={() => removePrintItem(index)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full mt-2 text-xs"
-              onClick={addPrintItem}
-            >
-              Add Item
-            </Button>
+      <Handle type="target" position={Position.Top} className={nodeStyles.handle} />
+      <div className="flex flex-col space-y-2">
+        {printItems.map((item, index) => (
+          <div key={index} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <Select
+                value={item.startsWith('"') || item.startsWith("'") ? "text" : "variable"}
+                onValueChange={(value) => {
+                  if (value === "text") {
+                    updatePrintItem(index, `""`);
+                  } else {
+                    updatePrintItem(index, "");
+                  }
+                }}
+              >
+                <SelectTrigger className="h-8 text-xs flex-shrink-0 w-24">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="variable">Variable</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {item.startsWith('"') || item.startsWith("'") ? (
+                // Text mode - show text templates
+                <Select
+                  value={item.slice(1, -1)}
+                  onValueChange={(value) => updatePrintItem(index, `"${value}"`)}
+                >
+                  <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectValue placeholder="Select or type text..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {textTemplates.map((template) => (
+                      <SelectItem key={template} value={template}>
+                        {template}
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="custom">Custom text...</SelectItem>
+                  </SelectContent>
+                </Select>
+              ) : (
+                // Variable mode - show available variables
+                <Select
+                  value={item}
+                  onValueChange={(value) => updatePrintItem(index, value)}
+                >
+                  <SelectTrigger className="h-8 text-xs flex-1">
+                    <SelectValue placeholder="Select a variable..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(data.availableVariables?.map((variable) => (
+                      <SelectItem key={variable} value={variable}>
+                        {variable}
+                      </SelectItem>
+                    ))) || (
+                      <SelectItem value="" disabled>
+                        No variables available
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              )}
+
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 flex-shrink-0"
+                      onClick={() => removePrintItem(index)}
+                      disabled={printItems.length <= 1}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Remove item</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
+
+            {/* Show text input only when custom text is selected */}
+            {item.startsWith('"') && item.slice(1, -1) === "custom" && (
+              <Input
+                value=""
+                onChange={(e) => updatePrintItem(index, `"${e.target.value}"`)}
+                placeholder="Enter custom text..."
+                className={cn(nodeStyles.input, getNodeColors("green").ring)}
+              />
+            )}
           </div>
-          <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
-        </div>
+        ))}
+        
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn("w-full", getNodeColors("green").ring)}
+          onClick={addPrintItem}
+        >
+          Add Item
+        </Button>
       </div>
+      <Handle type="source" position={Position.Bottom} className={nodeStyles.handle} />
     </NodeWrapper>
   );
 });
@@ -445,7 +473,7 @@ export const InputBlock = memo(({ data, id }: NodeProps) => (
             <label className={nodeStyles.label}>Variable Name</label>
             <Input
               value={data.variable}
-              onChange={(e) => data.onChange?.(e.target.value)}
+              onChange={(e) => data.updateProperty?.('variable', e.target.value)}
               placeholder="e.g., user_input"
               className={cn(nodeStyles.input, getNodeColors("purple").ring)}
             />
@@ -454,7 +482,7 @@ export const InputBlock = memo(({ data, id }: NodeProps) => (
             <label className={nodeStyles.label}>Prompt</label>
             <Input
               value={data.prompt}
-              onChange={(e) => data.onPromptChange?.(e.target.value)}
+              onChange={(e) => data.updateProperty?.('prompt', e.target.value)}
               placeholder="Enter your prompt..."
               className={cn(nodeStyles.input, getNodeColors("purple").ring)}
             />
@@ -474,15 +502,15 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
   // Initialize with default values if not provided
   useEffect(() => {
     if (loopType === "range") {
-      if (!data.start) data.onStartChange?.("0");
-      if (!data.end) data.onEndChange?.("10");
-      if (!data.step) data.onStepChange?.("1");
+      if (!data.start) data.updateProperty?.('start', "0");
+      if (!data.end) data.updateProperty?.('end', "10");
+      if (!data.step) data.updateProperty?.('step', "1");
     }
   }, [loopType, data]);
 
   const handleLoopTypeChange = (value: string) => {
     setLoopType(value);
-    data.onLoopTypeChange?.(value);
+    data.updateProperty?.('loopType', value);
   };
 
   return (
@@ -520,7 +548,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Iterator Variable</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., i"
                 className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
               />
@@ -531,7 +559,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Start</label>
                   <Input
                     value={data.start || "0"}
-                    onChange={(e) => data.onStartChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('start', e.target.value)}
                     placeholder="0"
                     className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
                   />
@@ -540,7 +568,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>End</label>
                   <Input
                     value={data.end || "10"}
-                    onChange={(e) => data.onEndChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('end', e.target.value)}
                     placeholder="10"
                     className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
                   />
@@ -549,7 +577,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Step</label>
                   <Input
                     value={data.step || "1"}
-                    onChange={(e) => data.onStepChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('step', e.target.value)}
                     placeholder="1"
                     className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
                   />
@@ -561,7 +589,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Collection</label>
                 <Input
                   value={data.iterable}
-                  onChange={(e) => data.onIterableChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('iterable', e.target.value)}
                   placeholder={loopType === "collection" ? "e.g., my_list" : "e.g., my_list"}
                   className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
                 />
@@ -572,7 +600,7 @@ export const ForBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Index Variable</label>
                 <Input
                   value={data.indexVar}
-                  onChange={(e) => data.onIndexVarChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('indexVar', e.target.value)}
                   placeholder="e.g., idx"
                   className={cn(nodeStyles.input, getNodeColors("yellow").ring)}
                 />
@@ -593,7 +621,7 @@ export const WhileBlock = memo(({ data, id }: NodeProps) => {
 
   const toggleCounter = () => {
     setUseCounter(!useCounter);
-    data.onUseCounterChange?.(!useCounter);
+    data.updateProperty?.('useCounter', !useCounter);
   };
 
   return (
@@ -618,7 +646,7 @@ export const WhileBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Condition</label>
               <Input
                 value={data.condition}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('condition', e.target.value)}
                 placeholder="e.g., x < 100"
                 className={cn(nodeStyles.input, getNodeColors("red").ring)}
               />
@@ -642,7 +670,7 @@ export const WhileBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Counter Variable</label>
                   <Input
                     value={data.counterVar}
-                    onChange={(e) => data.onCounterVarChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('counterVar', e.target.value)}
                     placeholder="e.g., counter"
                     className={cn(nodeStyles.input, getNodeColors("red").ring)}
                   />
@@ -652,7 +680,7 @@ export const WhileBlock = memo(({ data, id }: NodeProps) => {
                     <label className={nodeStyles.label}>Initial Value</label>
                     <Input
                       value={data.counterInit}
-                      onChange={(e) => data.onCounterInitChange?.(e.target.value)}
+                      onChange={(e) => data.updateProperty?.('counterInit', e.target.value)}
                       placeholder="0"
                       className={cn(nodeStyles.input, getNodeColors("red").ring)}
                     />
@@ -661,7 +689,7 @@ export const WhileBlock = memo(({ data, id }: NodeProps) => {
                     <label className={nodeStyles.label}>Increment</label>
                     <Input
                       value={data.counterIncrement}
-                      onChange={(e) => data.onCounterIncrementChange?.(e.target.value)}
+                      onChange={(e) => data.updateProperty?.('counterIncrement', e.target.value)}
                       placeholder="1"
                       className={cn(nodeStyles.input, getNodeColors("red").ring)}
                     />
@@ -688,26 +716,26 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
   const addItem = () => {
     const newItems = [...items, ''];
     setItems(newItems);
-    data.onItemsChange?.(newItems);
+    data.updateProperty?.('items', newItems);
   };
 
   const removeItem = (index: number) => {
     if (items.length <= 1) return;
     const newItems = items.filter((_, i) => i !== index);
     setItems(newItems);
-    data.onItemsChange?.(newItems);
+    data.updateProperty?.('items', newItems);
   };
 
   const updateItem = (index: number, value: string) => {
     const newItems = [...items];
     newItems[index] = value;
     setItems(newItems);
-    data.onItemsChange?.(newItems);
+    data.updateProperty?.('items', newItems);
   };
 
   const handleOperationChange = (value: string) => {
     setOperation(value);
-    data.onOperationChange?.(value);
+    data.updateProperty?.('operation', value);
   };
 
   return (
@@ -732,7 +760,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>List Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., my_list"
                 className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
               />
@@ -796,7 +824,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Value to Append</label>
                 <Input
                   value={data.appendValue}
-                  onChange={(e) => data.onAppendValueChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('appendValue', e.target.value)}
                   placeholder="Value to append"
                   className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
                 />
@@ -809,7 +837,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Index</label>
                   <Input
                     value={data.insertIndex}
-                    onChange={(e) => data.onInsertIndexChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('insertIndex', e.target.value)}
                     placeholder="Index (e.g., 0)"
                     className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
                   />
@@ -818,7 +846,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Value to Insert</label>
                   <Input
                     value={data.insertValue}
-                    onChange={(e) => data.onInsertValueChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('insertValue', e.target.value)}
                     placeholder="Value to insert"
                     className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
                   />
@@ -831,7 +859,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Value to Remove</label>
                 <Input
                   value={data.removeValue}
-                  onChange={(e) => data.onRemoveValueChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('removeValue', e.target.value)}
                   placeholder="Value to remove"
                   className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
                 />
@@ -843,7 +871,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Index (optional)</label>
                 <Input
                   value={data.popIndex}
-                  onChange={(e) => data.onPopIndexChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('popIndex', e.target.value)}
                   placeholder="Index (default: last item)"
                   className={cn(nodeStyles.input, getNodeColors("indigo").ring)}
                 />
@@ -855,7 +883,7 @@ export const ListBlock = memo(({ data, id }: NodeProps) => {
                 <Checkbox
                   id="reverseSort"
                   checked={data.reverseSort}
-                  onCheckedChange={(checked) => data.onReverseSortChange?.(!!checked)}
+                  onCheckedChange={(checked) => data.updateProperty?.('reverseSort', !!checked)}
                 />
                 <label
                   htmlFor="reverseSort"
@@ -884,26 +912,26 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
   const addKeyValuePair = () => {
     const newPairs = [...keyValuePairs, { key: '', value: '' }];
     setKeyValuePairs(newPairs);
-    data.onKeyValuePairsChange?.(newPairs);
+    data.updateProperty?.('keyValuePairs', newPairs);
   };
 
   const removeKeyValuePair = (index: number) => {
     if (keyValuePairs.length <= 1) return;
     const newPairs = keyValuePairs.filter((_, i) => i !== index);
     setKeyValuePairs(newPairs);
-    data.onKeyValuePairsChange?.(newPairs);
+    data.updateProperty?.('keyValuePairs', newPairs);
   };
 
   const updateKeyValuePair = (index: number, field: 'key' | 'value', value: string) => {
     const newPairs = [...keyValuePairs];
     newPairs[index][field] = value;
     setKeyValuePairs(newPairs);
-    data.onKeyValuePairsChange?.(newPairs);
+    data.updateProperty?.('keyValuePairs', newPairs);
   };
 
   const handleOperationChange = (value: string) => {
     setOperation(value);
-    data.onOperationChange?.(value);
+    data.updateProperty?.('operation', value);
   };
 
   return (
@@ -928,7 +956,7 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Dictionary Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., my_dict"
                 className={cn(nodeStyles.input, getNodeColors("pink").ring)}
               />
@@ -1002,7 +1030,7 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Key</label>
                   <Input
                     value={data.updateKey}
-                    onChange={(e) => data.onUpdateKeyChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('updateKey', e.target.value)}
                     placeholder="Key to update/add"
                     className={cn(nodeStyles.input, getNodeColors("pink").ring)}
                   />
@@ -1011,7 +1039,7 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
                   <label className={nodeStyles.label}>Value</label>
                   <Input
                     value={data.updateValue}
-                    onChange={(e) => data.onUpdateValueChange?.(e.target.value)}
+                    onChange={(e) => data.updateProperty?.('updateValue', e.target.value)}
                     placeholder="New value"
                     className={cn(nodeStyles.input, getNodeColors("pink").ring)}
                   />
@@ -1024,7 +1052,7 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Key</label>
                 <Input
                   value={data.getKey}
-                  onChange={(e) => data.onGetKeyChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('getKey', e.target.value)}
                   placeholder="Key to retrieve"
                   className={cn(nodeStyles.input, getNodeColors("pink").ring)}
                 />
@@ -1036,7 +1064,7 @@ export const DictBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Key</label>
                 <Input
                   value={data.deleteKey}
-                  onChange={(e) => data.onDeleteKeyChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('deleteKey', e.target.value)}
                   placeholder="Key to delete"
                   className={cn(nodeStyles.input, getNodeColors("pink").ring)}
                 />
@@ -1061,26 +1089,26 @@ export const TupleBlock = memo(({ data, id }: NodeProps) => {
   const addItem = () => {
     const newItems = [...items, ''];
     setItems(newItems);
-    data.onTupleItemsChange?.(newItems);
+    data.updateProperty?.('tupleItems', newItems);
   };
 
   const removeItem = (index: number) => {
     if (items.length <= 1) return;
     const newItems = items.filter((_, i) => i !== index);
     setItems(newItems);
-    data.onTupleItemsChange?.(newItems);
+    data.updateProperty?.('tupleItems', newItems);
   };
 
   const updateItem = (index: number, value: string) => {
     const newItems = [...items];
     newItems[index] = value;
     setItems(newItems);
-    data.onTupleItemsChange?.(newItems);
+    data.updateProperty?.('tupleItems', newItems);
   };
 
   const handleOperationChange = (value: string) => {
     setOperation(value);
-    data.onOperationChange?.(value);
+    data.updateProperty?.('operation', value);
   };
 
   return (
@@ -1105,7 +1133,7 @@ export const TupleBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Tuple Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., my_tuple"
                 className={cn(nodeStyles.input, getNodeColors("amber").ring)}
               />
@@ -1165,7 +1193,7 @@ export const TupleBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Index</label>
                 <Input
                   value={data.accessIndex}
-                  onChange={(e) => data.onAccessIndexChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('accessIndex', e.target.value)}
                   placeholder="Index (e.g., 0)"
                   className={cn(nodeStyles.input, getNodeColors("amber").ring)}
                 />
@@ -1177,7 +1205,7 @@ export const TupleBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Value to Count</label>
                 <Input
                   value={data.countValue}
-                  onChange={(e) => data.onCountValueChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('countValue', e.target.value)}
                   placeholder="Value to count"
                   className={cn(nodeStyles.input, getNodeColors("amber").ring)}
                 />
@@ -1189,7 +1217,7 @@ export const TupleBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Value to Find</label>
                 <Input
                   value={data.findValue}
-                  onChange={(e) => data.onFindValueChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('findValue', e.target.value)}
                   placeholder="Value to find"
                   className={cn(nodeStyles.input, getNodeColors("amber").ring)}
                 />
@@ -1214,26 +1242,26 @@ export const SetBlock = memo(({ data, id }: NodeProps) => {
   const addItem = () => {
     const newItems = [...items, ''];
     setItems(newItems);
-    data.onSetItemsChange?.(newItems);
+    data.updateProperty?.('setItems', newItems);
   };
 
   const removeItem = (index: number) => {
     if (items.length <= 1) return;
     const newItems = items.filter((_, i) => i !== index);
     setItems(newItems);
-    data.onSetItemsChange?.(newItems);
+    data.updateProperty?.('setItems', newItems);
   };
 
   const updateItem = (index: number, value: string) => {
     const newItems = [...items];
     newItems[index] = value;
     setItems(newItems);
-    data.onSetItemsChange?.(newItems);
+    data.updateProperty?.('setItems', newItems);
   };
 
   const handleOperationChange = (value: string) => {
     setOperation(value);
-    data.onOperationChange?.(value);
+    data.updateProperty?.('operation', value);
   };
 
   return (
@@ -1258,7 +1286,7 @@ export const SetBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Set Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., my_set"
                 className={cn(nodeStyles.input, getNodeColors("fuchsia").ring)}
               />
@@ -1321,7 +1349,7 @@ export const SetBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Item to Add</label>
                 <Input
                   value={data.addItem}
-                  onChange={(e) => data.onAddItemChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('addItem', e.target.value)}
                   placeholder="Value to add"
                   className={cn(nodeStyles.input, getNodeColors("fuchsia").ring)}
                 />
@@ -1333,7 +1361,7 @@ export const SetBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Item to Remove</label>
                 <Input
                   value={data.removeItem}
-                  onChange={(e) => data.onRemoveItemChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('removeItem', e.target.value)}
                   placeholder="Value to remove"
                   className={cn(nodeStyles.input, getNodeColors("fuchsia").ring)}
                 />
@@ -1345,7 +1373,7 @@ export const SetBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Other Set</label>
                 <Input
                   value={data.otherSet}
-                  onChange={(e) => data.onOtherSetChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('otherSet', e.target.value)}
                   placeholder="Other set variable"
                   className={cn(nodeStyles.input, getNodeColors("fuchsia").ring)}
                 />
@@ -1380,7 +1408,7 @@ export const LambdaBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Parameters</label>
         <Input
           value={data.params}
-          onChange={(e) => data.onParamsChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('params', e.target.value)}
           placeholder="Parameters..."
           className={nodeStyles.input}
         />
@@ -1389,7 +1417,7 @@ export const LambdaBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Expression</label>
         <Input
           value={data.expression}
-          onChange={(e) => data.onExpressionChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('expression', e.target.value)}
           placeholder="Expression..."
           className={nodeStyles.input}
         />
@@ -1419,7 +1447,7 @@ export const OpenFileBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>File Variable</label>
         <Input
           value={data.variable}
-          onChange={(e) => data.onChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('variable', e.target.value)}
           placeholder="File variable..."
           className={nodeStyles.input}
         />
@@ -1428,7 +1456,7 @@ export const OpenFileBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Filename</label>
         <Input
           value={data.filename}
-          onChange={(e) => data.onFilenameChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('filename', e.target.value)}
           placeholder="Filename..."
           className={nodeStyles.input}
         />
@@ -1437,7 +1465,7 @@ export const OpenFileBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Mode</label>
         <Input
           value={data.mode}
-          onChange={(e) => data.onModeChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('mode', e.target.value)}
           placeholder="Mode (r/w/a)..."
           className={nodeStyles.input}
         />
@@ -1470,7 +1498,7 @@ export const TryBlock = memo(({ data, id }: NodeProps) => (
             <label className={nodeStyles.label}>Try Block Code</label>
             <Input
               value={data.code}
-              onChange={(e) => data.onChange?.(e.target.value)}
+              onChange={(e) => data.updateProperty?.('code', e.target.value)}
               placeholder="Code to try..."
               className={cn(nodeStyles.input, getNodeColors("rose").ring)}
             />
@@ -1479,7 +1507,7 @@ export const TryBlock = memo(({ data, id }: NodeProps) => (
             <label className={nodeStyles.label}>Exception Type</label>
             <Input
               value={data.error}
-              onChange={(e) => data.onErrorChange?.(e.target.value)}
+              onChange={(e) => data.updateProperty?.('error', e.target.value)}
               placeholder="e.g., Exception"
               className={cn(nodeStyles.input, getNodeColors("rose").ring)}
             />
@@ -1512,7 +1540,7 @@ export const ImportBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Module</label>
         <Input
           value={data.module}
-          onChange={(e) => data.onChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('module', e.target.value)}
           placeholder="Module name..."
           className={nodeStyles.input}
         />
@@ -1521,7 +1549,7 @@ export const ImportBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Alias</label>
         <Input
           value={data.alias}
-          onChange={(e) => data.onAliasChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('alias', e.target.value)}
           placeholder="Alias (optional)..."
           className={nodeStyles.input}
         />
@@ -1551,7 +1579,7 @@ export const NumpyArrayBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Array Name</label>
         <Input
           value={data.variable}
-          onChange={(e) => data.onChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('variable', e.target.value)}
           placeholder="Array name..."
           className={nodeStyles.input}
         />
@@ -1560,7 +1588,7 @@ export const NumpyArrayBlock = memo(({ data, id }: NodeProps) => (
         <label className={nodeStyles.label}>Array Value</label>
         <Input
           value={data.value}
-          onChange={(e) => data.onValueChange?.(e.target.value)}
+          onChange={(e) => data.updateProperty?.('value', e.target.value)}
           placeholder="Array value..."
           className={nodeStyles.input}
         />
@@ -1576,7 +1604,7 @@ export const VariableBlock = memo(({ data, id }: NodeProps) => {
 
   const handleTypeChange = (value: string) => {
     setVariableType(value);
-    data.onTypeChange?.(value);
+    data.updateProperty?.('variableType', value);
   };
 
   return (
@@ -1601,7 +1629,7 @@ export const VariableBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Variable Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., my_variable"
                 className={cn(nodeStyles.input, getNodeColors("blue").ring)}
               />
@@ -1623,7 +1651,7 @@ export const VariableBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Value</label>
               <Input
                 value={data.value}
-                onChange={(e) => data.onValueChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('value', e.target.value)}
                 placeholder={variableType === "string" ? "Text value" :
                   variableType === "number" ? "Numeric value" : "true/false"}
                 className={cn(nodeStyles.input, getNodeColors("blue").ring)}
@@ -1644,7 +1672,7 @@ export const FunctionBlock = memo(({ data, id }: NodeProps) => {
 
   const toggleDocstring = () => {
     setShowDocstring(!showDocstring);
-    data.onShowDocstringChange?.(!showDocstring);
+    data.updateProperty?.('showDocstring', !showDocstring);
   };
 
   return (
@@ -1669,7 +1697,7 @@ export const FunctionBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Function Name</label>
               <Input
                 value={data.name}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('name', e.target.value)}
                 placeholder="e.g., my_function"
                 className={cn(nodeStyles.input, getNodeColors("orange").ring)}
               />
@@ -1678,7 +1706,7 @@ export const FunctionBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Parameters</label>
               <Input
                 value={data.params}
-                onChange={(e) => data.onParamsChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('params', e.target.value)}
                 placeholder="e.g., x, y=10"
                 className={cn(nodeStyles.input, getNodeColors("orange").ring)}
               />
@@ -1687,7 +1715,7 @@ export const FunctionBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Return Type (optional)</label>
               <Input
                 value={data.returnType}
-                onChange={(e) => data.onReturnTypeChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('returnType', e.target.value)}
                 placeholder="e.g., int, str, None"
                 className={cn(nodeStyles.input, getNodeColors("orange").ring)}
               />
@@ -1710,7 +1738,7 @@ export const FunctionBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Docstring</label>
                 <Textarea
                   value={data.docstring}
-                  onChange={(e) => data.onDocstringChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('docstring', e.target.value)}
                   placeholder="Function description..."
                   className={cn(nodeStyles.input, getNodeColors("orange").ring)}
                   rows={3}
@@ -1749,7 +1777,7 @@ export const ReturnBlock = memo(({ data, id }: NodeProps) => (
             <label className={nodeStyles.label}>Return Value</label>
             <Input
               value={data.value}
-              onChange={(e) => data.onValueChange?.(e.target.value)}
+              onChange={(e) => data.updateProperty?.('value', e.target.value)}
               placeholder="Value to return"
               className={cn(nodeStyles.input, getNodeColors("lime").ring)}
             />
@@ -1768,7 +1796,7 @@ export const FlaskApiBlock = memo(({ data, id }: NodeProps) => {
 
   const handleMethodChange = (value: string) => {
     setMethod(value);
-    data.onMethodChange?.(value);
+    data.updateProperty?.('method', value);
   };
 
   return (
@@ -1793,7 +1821,7 @@ export const FlaskApiBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Route</label>
               <Input
                 value={data.route}
-                onChange={(e) => data.onRouteChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('route', e.target.value)}
                 placeholder="e.g., /api/data"
                 className={cn(nodeStyles.input, getNodeColors("cyan").ring)}
               />
@@ -1816,7 +1844,7 @@ export const FlaskApiBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Function Name</label>
               <Input
                 value={data.name}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('name', e.target.value)}
                 placeholder="e.g., get_data"
                 className={cn(nodeStyles.input, getNodeColors("cyan").ring)}
               />
@@ -1836,7 +1864,7 @@ export const HttpRequestBlock = memo(({ data, id }: NodeProps) => {
 
   const handleMethodChange = (value: string) => {
     setMethod(value);
-    data.onMethodChange?.(value);
+    data.updateProperty?.('method', value);
   };
 
   return (
@@ -1861,7 +1889,7 @@ export const HttpRequestBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Variable Name</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., response"
                 className={cn(nodeStyles.input, getNodeColors("violet").ring)}
               />
@@ -1870,7 +1898,7 @@ export const HttpRequestBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>URL</label>
               <Input
                 value={data.url}
-                onChange={(e) => data.onUrlChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('url', e.target.value)}
                 placeholder="e.g., https://api.example.com/data"
                 className={cn(nodeStyles.input, getNodeColors("violet").ring)}
               />
@@ -1894,7 +1922,7 @@ export const HttpRequestBlock = memo(({ data, id }: NodeProps) => {
                 <label className={nodeStyles.label}>Data (JSON)</label>
                 <Textarea
                   value={data.data}
-                  onChange={(e) => data.onDataChange?.(e.target.value)}
+                  onChange={(e) => data.updateProperty?.('data', e.target.value)}
                   placeholder='{"key": "value"}'
                   className={cn(nodeStyles.input, getNodeColors("violet").ring)}
                   rows={3}
@@ -1934,7 +1962,7 @@ export const SqlQueryBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Connection Variable</label>
               <Input
                 value={data.connection}
-                onChange={(e) => data.onConnectionChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('connection', e.target.value)}
                 placeholder="e.g., conn"
                 className={cn(nodeStyles.input, getNodeColors("amber").ring)}
               />
@@ -1943,7 +1971,7 @@ export const SqlQueryBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Result Variable</label>
               <Input
                 value={data.variable}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('variable', e.target.value)}
                 placeholder="e.g., results"
                 className={cn(nodeStyles.input, getNodeColors("amber").ring)}
               />
@@ -1952,7 +1980,7 @@ export const SqlQueryBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>SQL Query</label>
               <Textarea
                 value={data.query}
-                onChange={(e) => data.onQueryChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('query', e.target.value)}
                 placeholder="SELECT * FROM table"
                 className={cn(nodeStyles.input, getNodeColors("amber").ring)}
                 rows={3}
@@ -1973,7 +2001,7 @@ export const FastApiBlock = memo(({ data, id }: NodeProps) => {
 
   const handleMethodChange = (value: string) => {
     setMethod(value);
-    data.onMethodChange?.(value);
+    data.updateProperty?.('method', value);
   };
 
   return (
@@ -1998,7 +2026,7 @@ export const FastApiBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Route</label>
               <Input
                 value={data.route}
-                onChange={(e) => data.onRouteChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('route', e.target.value)}
                 placeholder="e.g., /api/data"
                 className={cn(nodeStyles.input, getNodeColors("green").ring)}
               />
@@ -2021,7 +2049,7 @@ export const FastApiBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Function Name</label>
               <Input
                 value={data.name}
-                onChange={(e) => data.onChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('name', e.target.value)}
                 placeholder="e.g., get_data"
                 className={cn(nodeStyles.input, getNodeColors("green").ring)}
               />
@@ -2030,7 +2058,7 @@ export const FastApiBlock = memo(({ data, id }: NodeProps) => {
               <label className={nodeStyles.label}>Response Model (optional)</label>
               <Input
                 value={data.responseModel}
-                onChange={(e) => data.onResponseModelChange?.(e.target.value)}
+                onChange={(e) => data.updateProperty?.('responseModel', e.target.value)}
                 placeholder="e.g., Item"
                 className={cn(nodeStyles.input, getNodeColors("green").ring)}
               />

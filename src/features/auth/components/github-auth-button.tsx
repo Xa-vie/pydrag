@@ -3,7 +3,7 @@
 import { useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Button } from '@/components/ui/button';
-import { Icons } from '@/components/icons';
+import { Github } from 'lucide-react';
 
 export default function GithubSignInButton() {
   const searchParams = useSearchParams();
@@ -11,16 +11,17 @@ export default function GithubSignInButton() {
 
   return (
     <Button
-      disabled={true}
-      className='w-full'
       variant='outline'
       type='button'
+      disabled={true}
+      className='w-full h-10 bg-transparent'
       onClick={() =>
         signIn('github', { callbackUrl: callbackUrl ?? '/dashboard' })
       }
     >
-      <Icons.gitHub className='mr-2 h-4 w-4' />
-      Continue with Github
+      <Github className='mr-2 h-4 w-4' />
+      GitHub Sign In
+      <span className="ml-2 text-[10px] text-muted-foreground">(coming soon)</span>
     </Button>
   );
 }
