@@ -61,6 +61,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
     </KBarProvider>
   );
 }
+
 const KBarComponent = ({ children }: { children: React.ReactNode }) => {
   useThemeSwitching();
 

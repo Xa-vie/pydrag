@@ -1,7 +1,8 @@
 import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import { ReactFlowProvider } from '@xyflow/react';
-import { CodeFlow } from '@/components/codeflow/code-flow';
+import dynamic from 'next/dynamic';
+const ReactFlowProvider = dynamic(() => import('@xyflow/react').then(mod => mod.ReactFlowProvider));
+const CodeFlow = dynamic(() => import('@/components/codeflow/code-flow').then(mod => mod.CodeFlow));
 
 export default async function Dashboard() {
   const session = await auth();

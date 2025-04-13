@@ -17,6 +17,10 @@ import {
 export interface BaseNodeData {
   label: string;
   type: string;
+  measured?: {
+    width: number;
+    height: number;
+  };
   [key: string]: unknown;
 }
 
@@ -25,6 +29,15 @@ export interface IfNodeData extends BaseNodeData {
   condition?: string;
   elifConditions: { id: string; condition: string }[];
   hasElse: boolean;
+}
+
+export interface ElifNodeData extends BaseNodeData {
+  type: 'elifBlock';
+  condition?: string;
+}
+
+export interface ElseNodeData extends BaseNodeData {
+  type: 'elseBlock';
 }
 
 export interface ForLoopNodeData extends BaseNodeData {
@@ -47,6 +60,7 @@ export interface DatabaseNodeData extends BaseNodeData {
 
 export interface FunctionNodeData extends BaseNodeData {
   type: 'function';
+  name: string;
   internalNodes: Node<NodeData>[];
   internalEdges: Edge[];
   parameters: string[];
@@ -58,8 +72,8 @@ export interface PrintNodeData extends BaseNodeData {
   message?: string;
 }
 
-export interface AnnotationNodeData extends BaseNodeData {
-  type: 'annotation';
+export interface CommentNodeData extends BaseNodeData {
+  type: 'comment';
   level: string;
   label: string;
   arrowStyle?: { [key: string]: string };
@@ -73,6 +87,27 @@ export interface FunctionCallNodeData extends BaseNodeData {
   arguments: string[];
 }
 
+export interface TryNodeData extends BaseNodeData {
+  type: 'tryBlock';
+  code?: string;
+  error?: string;
+  hasFinally?: boolean;
+}
+
+export interface ExceptNodeData extends BaseNodeData {
+  type: 'exceptBlock';
+  exceptionType?: string;
+}
+
+export interface FinallyNodeData extends BaseNodeData {
+  type: 'finallyBlock';
+}
+
+export interface ReturnNodeData extends BaseNodeData {
+  type: 'return';
+  returnValue: string;
+}
+
 export type NodeData = 
   | IfNodeData 
   | ForLoopNodeData 
@@ -80,8 +115,14 @@ export type NodeData =
   | DatabaseNodeData 
   | FunctionNodeData 
   | PrintNodeData
-  | AnnotationNodeData
-  | FunctionCallNodeData;
+  | CommentNodeData
+  | FunctionCallNodeData
+  | ElifNodeData
+  | ElseNodeData
+  | TryNodeData
+  | ExceptNodeData
+  | FinallyNodeData
+  | ReturnNodeData;
 
 interface FlowState {
   nodes: Node<NodeData>[];
@@ -103,9 +144,17 @@ interface FlowState {
 
 // Helper function to create initial node data
 const createInitialNodeData = (type: string): NodeData => {
+  const baseData = {
+    measured: {
+      width: 280,
+      height: 72
+    }
+  };
+
   switch (type) {
     case 'ifBlock':
       return {
+        ...baseData,
         type: 'ifBlock' as const,
         label: 'If Condition',
         condition: '',
@@ -113,8 +162,24 @@ const createInitialNodeData = (type: string): NodeData => {
         hasElse: false,
         generateComment: false
       };
+    case 'elifBlock':
+      return {
+        ...baseData,
+        type: 'elifBlock' as const,
+        label: 'Elif Condition',
+        condition: '',
+        generateComment: false
+      };
+    case 'elseBlock':
+      return {
+        ...baseData,
+        type: 'elseBlock' as const,
+        label: 'Else',
+        generateComment: false
+      };
     case 'forLoop':
       return {
+        ...baseData,
         type: 'forLoop' as const,
         label: 'For Loop',
         condition: '',
@@ -122,6 +187,7 @@ const createInitialNodeData = (type: string): NodeData => {
       };
     case 'variable':
       return {
+        ...baseData,
         type: 'variable' as const,
         label: 'Variable',
         value: '',
@@ -129,6 +195,7 @@ const createInitialNodeData = (type: string): NodeData => {
       };
     case 'database':
       return {
+        ...baseData,
         type: 'database' as const,
         label: 'Database',
         query: '',
@@ -136,25 +203,30 @@ const createInitialNodeData = (type: string): NodeData => {
       };
     case 'function':
       return {
+        ...baseData,
         type: 'function' as const,
         label: 'Function',
+        name: '',
         internalNodes: [],
         internalEdges: [],
         parameters: [],
         returnValue: false,
         generateComment: false
       };
-    case 'annotation':
+    case 'comment':
       return {
-        type: 'annotation' as const,
-        label: 'Annotation',
+        ...baseData,
+        type: 'comment' as const,
+        label: 'Comment',
         level: '1',
         arrowStyle: {},
         generateComment: false
       };
     case 'print':
+    case 'return':
     default:
       return {
+        ...baseData,
         type: 'print' as const,
         label: 'Print',
         message: '',
@@ -168,14 +240,14 @@ const initialEdges: Edge[] = [
 
 ];
 
-// Initial nodes with annotations and examples
+// Initial nodes with comments and examples
 const initialNodes: Node<NodeData>[] = [
   {
     id: 'comment1',
-    type: 'annotation',
+    type: 'comment',
     position: { x: 100, y: 100 },
     data: {
-      type: 'annotation',
+      type: 'comment',
       level: '1',
       label: 'A simple Hello World program',
       arrowStyle: {},
@@ -215,15 +287,20 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
   },
   addNode: (type: string, position: { x: number; y: number }, data?: NodeData) => {
+    const nodes = get().nodes;
+    const lastNode = nodes[nodes.length - 1];
     const newNode: Node<NodeData> = {
       id: crypto.randomUUID(),
       type,
-      position,
+      position: lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 100) + 50 // Add 50px padding between nodes
+      } : position,
       data: data || createInitialNodeData(type),
     };
 
     set({
-      nodes: [...get().nodes, newNode],
+      nodes: [...nodes, newNode],
     });
   },
   updateNode: (id: string, newData: Partial<NodeData>) => {
