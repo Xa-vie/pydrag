@@ -125,9 +125,9 @@ export const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: 
         
         // Handle different value types appropriately
         if (node.data.valueType === 'list') {
-          // For list type, format it as a proper Python list with type handling
-          const listItems = Array.isArray(value) ? value : [];
-          return `${spaces}${name} = [${listItems.map(item => {
+          // For list type, use the listItems array directly
+          const listItems = (node.data.listItems || []) as string[];
+          return `${spaces}${name} = [${listItems.map((item: string) => {
             // Check if item is a number
             const num = Number(item);
             return !isNaN(num) ? num : `"${item}"`;
@@ -145,17 +145,15 @@ export const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: 
             // Always quote keys in Python dictionaries
             return `"${item.key}": ${formattedValue}`;
           }).join(', ')}}`;
-        } else if (value === true || value === 'true') {
-          return `${spaces}${name} = True`;
-        } else if (value === false || value === 'false') {
-          return `${spaces}${name} = False`;
+        } else if (value === 'true' || value === 'false') {
+          return `${spaces}${name} = ${value === 'true' ? 'True' : 'False'}`;
         } else if (!isNaN(Number(value))) {
           return `${spaces}${name} = ${value}`;
         } else if (typeof value === 'string' && (value.includes('+') || value.includes('-') || value.includes('*') || value.includes('/') || 
                    allVariables.some(v => value.includes(v)))) {
           return `${spaces}${name} = ${value}`;
         } else {
-          return `${spaces}${name} = "${value}"`;
+          return `${spaces}${name} = "${String(value)}"`;
         }
       }
       return `${spaces}variable = None`;

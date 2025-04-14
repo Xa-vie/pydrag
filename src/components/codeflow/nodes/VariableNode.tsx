@@ -153,15 +153,21 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     const newData: VariableNodeData = {
       ...data,
       listItems: newListItems,
-      value: JSON.stringify(newListItems)
+      value: JSON.stringify(newListItems) // Keep JSON.stringify for type compatibility
     };
     updateNode(id, newData);
     setNewListItem('');
     
     if (data.name && !nameError) {
+      // Format the list items properly for Python
       const formattedValue = `[${newListItems.map(item => {
+        // Try to parse as number first
         const num = Number(item);
-        return !isNaN(num) ? num : `"${item}"`; 
+        if (!isNaN(num)) {
+          return num.toString();
+        }
+        // If not a number, wrap in quotes
+        return `"${item}"`;
       }).join(', ')}]`;
       setVariable(data.name, formattedValue, id);
     }

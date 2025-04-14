@@ -200,7 +200,7 @@ const Sidebar = memo(() => {
                 <AccordionTrigger className="py-2 px-3 text-sm hover:no-underline">
                   <div className="flex items-center gap-2">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary/70"></div>
-                    <span>{category.label}</span>
+                    <span className="tracking-tight font-medium">{category.label}</span>
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-3 pb-3 pt-1">
@@ -231,12 +231,12 @@ const Sidebar = memo(() => {
                               "text-primary/80 group-hover/item:text-primary transition-colors"
                             )} />
                           </div>
-                          <p className="text-xs font-medium text-center text-muted-foreground group-hover/item:text-foreground transition-colors">
+                          <p className="text-xs tracking-tight font-medium text-center text-muted-foreground/90 group-hover/item:text-foreground transition-colors">
                             {item.label}
                           </p>
                           {shortcut && (
                             <div className={clsx(
-                              "absolute text-[10px] font-medium text-muted-foreground bg-muted/70 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-sm transition-all",
+                              "absolute text-[10px] tracking-wide font-medium text-muted-foreground/90 bg-muted/80 backdrop-blur-sm px-1.5 py-0.5 rounded-sm shadow-sm transition-all",
                               "top-1 right-1"
                             )}>
                               {shortcut}

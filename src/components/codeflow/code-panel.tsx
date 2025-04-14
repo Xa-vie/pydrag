@@ -1,18 +1,28 @@
 import { memo, useState, useMemo } from 'react';
 import { usePython } from 'react-py';
-import { Code2, Terminal, Check, Copy, Download, Expand, Play, Loader2, Code, ChevronRight, ChevronDown } from 'lucide-react';
+import { Code2, Terminal, Check, Copy, Download, Expand, Play, Loader2, Code, ChevronRight, ChevronDown, FileCode2, Pencil } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Button } from '../ui/button';
 import { useFlowStore } from '@/store/use-flow-store';
 import clsx from 'clsx';
 import { generateNodeCode } from './code-generation';
+import { Input } from '../ui/input';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CodePanel = memo(() => {
   const { stdout, stderr, isLoading, runPython } = usePython();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'code' | 'output'>('code');
+  const [fileName, setFileName] = useState('code');
+  const [isFileNameFocused, setIsFileNameFocused] = useState(false);
+  const [isFileNameHovered, setIsFileNameHovered] = useState(false);
   const { nodes, edges } = useFlowStore();
 
   const generatedCode = useMemo(() => {
@@ -39,7 +49,7 @@ const CodePanel = memo(() => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = 'code.py';
+    link.download = `${fileName}.py`;
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -65,11 +75,49 @@ const CodePanel = memo(() => {
       {/* Compact Preview Card */}
       <div className="w-80 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg overflow-hidden">
         <div className="border-b bg-muted/80 px-3 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="p-1 rounded-md bg-primary/10">
-              <Code2 size={14} className="text-primary" />
+          <div className="flex items-center gap-2 flex-1">
+            <div className={clsx(
+              "p-1.5 rounded-md transition-colors duration-200",
+              isFileNameFocused ? "bg-primary/20" : "bg-primary/10"
+            )}>
+              <FileCode2 size={14} className={clsx(
+                "transition-colors duration-200",
+                isFileNameFocused ? "text-primary" : "text-primary/80"
+              )} />
             </div>
-            <span className="text-xs font-medium">Python Code</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div 
+                    className={clsx(
+                      "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200 flex-1 group cursor-text",
+                      isFileNameFocused ? "bg-muted/80" : "hover:bg-muted/50"
+                    )}
+                    onMouseEnter={() => setIsFileNameHovered(true)}
+                    onMouseLeave={() => setIsFileNameHovered(false)}
+                  >
+                    <Input
+                      value={fileName}
+                      onChange={(e) => setFileName(e.target.value)}
+                      onFocus={() => setIsFileNameFocused(true)}
+                      onBlur={() => setIsFileNameFocused(false)}
+                      className="h-5 text-xs w-[100px] bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
+                      placeholder="Untitled"
+                    />
+                    <Pencil 
+                      size={12} 
+                      className={clsx(
+                        "text-muted-foreground/50 transition-opacity duration-200",
+                        isFileNameHovered || isFileNameFocused ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="bottom" className="text-xs">
+                  Click to rename file
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </div>
           <div className="flex gap-1">
             <Button
@@ -199,12 +247,44 @@ const CodePanel = memo(() => {
         <DialogContent className="max-w-4xl max-h-[90vh]">
           <DialogHeader>
             <div className="flex items-center gap-2">
-              <div className="p-1.5 rounded-md bg-primary/10">
-                <Code size={16} className="text-primary" />
+              <div className={clsx(
+                "p-2 rounded-md transition-colors duration-200",
+                isFileNameFocused ? "bg-primary/20" : "bg-primary/10"
+              )}>
+                <FileCode2 size={18} className={clsx(
+                  "transition-colors duration-200",
+                  isFileNameFocused ? "text-primary" : "text-primary/80"
+                )} />
               </div>
-              <div>
-                <DialogTitle>Python Code</DialogTitle>
-                <DialogDescription>Generated from your flow diagram</DialogDescription>
+              <div className="flex-1">
+                <DialogTitle>
+                  <div 
+                    className={clsx(
+                      "flex items-center gap-2 px-3 py-1.5 rounded-md w-fit transition-all duration-200 group",
+                      isFileNameFocused ? "bg-muted" : "hover:bg-muted/50"
+                    )}
+                    onMouseEnter={() => setIsFileNameHovered(true)}
+                    onMouseLeave={() => setIsFileNameHovered(false)}
+                  >
+                    <Input
+                      value={fileName}
+                      onChange={(e) => setFileName(e.target.value)}
+                      onFocus={() => setIsFileNameFocused(true)}
+                      onBlur={() => setIsFileNameFocused(false)}
+                      className="h-7 text-lg font-semibold w-[200px] bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
+                      placeholder="Untitled"
+                    />
+                    <span className="text-lg font-medium text-muted-foreground/70">.py</span>
+                    <Pencil 
+                      size={14} 
+                      className={clsx(
+                        "text-muted-foreground/50 transition-opacity duration-200",
+                        isFileNameHovered || isFileNameFocused ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                  </div>
+                </DialogTitle>
+                <DialogDescription className="mt-1.5">Generated from your flow diagram</DialogDescription>
               </div>
             </div>
           </DialogHeader>
