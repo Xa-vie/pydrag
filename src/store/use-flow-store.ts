@@ -108,6 +108,16 @@ export interface ReturnNodeData extends BaseNodeData {
   returnValue: string;
 }
 
+export interface OperationNodeData extends BaseNodeData {
+  type: 'operation';
+  dataType?: 'string' | 'list' | 'dict';
+  targetVariable?: string;
+  operation?: string;
+  parameters: string[];
+  resultVariable?: string;
+  generateComment: boolean;
+}
+
 export type NodeData = 
   | IfNodeData 
   | ForLoopNodeData 
@@ -122,7 +132,8 @@ export type NodeData =
   | TryNodeData
   | ExceptNodeData
   | FinallyNodeData
-  | ReturnNodeData;
+  | ReturnNodeData
+  | OperationNodeData;
 
 interface FlowState {
   nodes: Node<NodeData>[];
@@ -220,6 +231,18 @@ const createInitialNodeData = (type: string): NodeData => {
         label: 'Comment',
         level: '1',
         arrowStyle: {},
+        generateComment: false
+      };
+    case 'operation':
+      return {
+        ...baseData,
+        type: 'operation' as const,
+        label: 'Operation',
+        dataType: undefined,
+        targetVariable: undefined,
+        operation: '',
+        parameters: [],
+        resultVariable: '',
         generateComment: false
       };
     case 'print':

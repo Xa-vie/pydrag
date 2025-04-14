@@ -6,8 +6,15 @@ import { Code } from "lucide-react";
 import { useFlowStore } from "@/store/use-flow-store";
 import NodeWrapper from "./NodeWrapper";
 import { memo } from "react";
+import { CommentNodeData } from "./types";
 
-const CommentNode = memo(({ data, id, selected }: NodeComponentProps<AnnotationNodeData>) => {
+interface NodeComponentProps<T> {
+  data: T;
+  id: string;
+  selected: boolean;
+}
+
+const CommentNode = memo(({ data, id, selected }: NodeComponentProps<CommentNodeData>) => {
     const updateNode = useFlowStore(state => state.updateNode);
     const deleteNode = useFlowStore(state => state.deleteNode);
   // New Else Node Component
@@ -28,7 +35,7 @@ const CommentNode = memo(({ data, id, selected }: NodeComponentProps<AnnotationN
   
     return (
       <NodeWrapper 
-        onDelete={() => deleteNode(id)}
+        id={id}
         icon={Code}
         label="Comment"
         selected={selected}

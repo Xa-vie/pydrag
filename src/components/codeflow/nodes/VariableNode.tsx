@@ -6,6 +6,11 @@ import { VariableNodeData, NodeComponentProps } from './types';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
 
+interface DictItem {
+  key: string;
+  value: string;
+}
+
 const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
   const setVariable = useFlowStore(state => state.setVariable);
@@ -148,15 +153,13 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     const newData: VariableNodeData = {
       ...data,
       listItems: newListItems,
-      value: newListItems
+      value: JSON.stringify(newListItems)
     };
     updateNode(id, newData);
     setNewListItem('');
     
     if (data.name && !nameError) {
-      // Format as a Python list with proper type handling for numbers
       const formattedValue = `[${newListItems.map(item => {
-        // Check if item is a number
         const num = Number(item);
         return !isNaN(num) ? num : `"${item}"`; 
       }).join(', ')}]`;
@@ -171,14 +174,12 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     const newData: VariableNodeData = {
       ...data,
       listItems: newListItems,
-      value: newListItems
+      value: JSON.stringify(newListItems)
     };
     updateNode(id, newData);
     
     if (data.name && !nameError) {
-      // Format as a Python list with proper type handling for numbers
       const formattedValue = `[${newListItems.map(item => {
-        // Check if item is a number
         const num = Number(item);
         return !isNaN(num) ? num : `"${item}"`; 
       }).join(', ')}]`;
@@ -193,20 +194,37 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     const newData: VariableNodeData = {
       ...data,
       dictItems: newDictItems,
-      value: newDictItems
+      value: JSON.stringify(newDictItems)
     };
     updateNode(id, newData);
     setNewDictKey('');
     setNewDictValue('');
     
     if (data.name && !nameError) {
-      // Format as a Python dictionary with proper key-value pairs
       const formattedValue = `{${newDictItems.map(item => {
-        // Check if value is a number
         const numValue = Number(item.value);
         const formattedValue = !isNaN(numValue) ? numValue : `"${item.value}"`;
-        
-        // Always quote keys in Python dictionaries
+        return `"${item.key}": ${formattedValue}`;
+      }).join(', ')}}`;
+      setVariable(data.name, formattedValue, id);
+    }
+  };
+
+  const handleRemoveDictItem = (index: number) => {
+    const newDictItems = [...(data.dictItems || [])];
+    newDictItems.splice(index, 1);
+    
+    const newData: VariableNodeData = {
+      ...data,
+      dictItems: newDictItems,
+      value: JSON.stringify(newDictItems)
+    };
+    updateNode(id, newData);
+    
+    if (data.name && !nameError) {
+      const formattedValue = `{${newDictItems.map(item => {
+        const numValue = Number(item.value);
+        const formattedValue = !isNaN(numValue) ? numValue : `"${item.value}"`;
         return `"${item.key}": ${formattedValue}`;
       }).join(', ')}}`;
       setVariable(data.name, formattedValue, id);
@@ -264,7 +282,7 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
           <div>
             <label className={nodeStyles.label}>List Items</label>
             <div className="space-y-2">
-              {data.listItems?.map((item, index) => (
+              {data.listItems?.map((item: string, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <input
                     value={item}
@@ -301,7 +319,7 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
           <div>
             <label className={nodeStyles.label}>Dictionary Items</label>
             <div className="space-y-2">
-              {data.dictItems?.map((item, index) => (
+              {data.dictItems?.map((item: DictItem, index: number) => (
                 <div key={index} className="flex items-center gap-2">
                   <input
                     value={item.key}

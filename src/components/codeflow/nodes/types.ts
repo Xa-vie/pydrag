@@ -88,6 +88,16 @@ export interface ReturnNodeData extends BaseNodeData {
   returnValue: string;
 }
 
+export interface OperationNodeData extends BaseNodeData {
+  type: 'operation';
+  dataType?: 'string' | 'list' | 'dict';
+  targetVariable?: string;
+  operation?: string;
+  parameters: string[];
+  resultVariable?: string;
+  generateComment: boolean;
+}
+
 export interface NodeComponentProps<T extends StoreBaseNodeData> {
   id: string;
   data: T;

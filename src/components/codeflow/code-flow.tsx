@@ -143,6 +143,10 @@ const ReturnNode = dynamic(() => import('./nodes/ReturnNode'), {
   ssr: false,
   loading: () => <NodeSkeleton />
 });
+const OperationNode = dynamic(() => import('./nodes/OperationNode'), { 
+  ssr: false,
+  loading: () => <NodeSkeleton />
+});
 
 // Custom props type for node components
 interface NodeComponentProps<T extends NodeData> {
@@ -167,6 +171,7 @@ const nodeTypes = {
   exceptBlock: ExceptBlockNode as unknown as ComponentType<NodeProps>,
   finallyBlock: FinallyBlockNode as unknown as ComponentType<NodeProps>,
   return: ReturnNode as unknown as ComponentType<NodeProps>,
+  operation: OperationNode as unknown as ComponentType<NodeProps>,
 };
 
 export function CodeFlow() {
@@ -231,13 +236,30 @@ export function CodeFlow() {
       // Initialize node data based on type
       let initialData: NodeData;
       switch (type) {
+        case 'operation':
+          initialData = {
+            type: 'operation',
+            label: 'Operation',
+            dataType: undefined,
+            targetVariable: undefined,
+            operation: '',
+            parameters: [],
+            resultVariable: '',
+            generateComment: false,
+            measured: {
+              width: 280,
+              height: 72
+            }
+          };
+          break;
         case 'ifBlock':
           initialData = {
             type: 'ifBlock',
             label: 'If Condition',
             condition: '',
             elifConditions: [],
-            hasElse: false
+            hasElse: false,
+            generateComment: false
           };
           break;
         case 'elifBlock':
@@ -305,6 +327,7 @@ export function CodeFlow() {
           initialData = {
             type: 'function',
             label: 'Function',
+            name: '',
             internalNodes: [],
             internalEdges: [],
             parameters: [],
@@ -599,6 +622,26 @@ export function CodeFlow() {
           y: (reactFlowInstance?.getViewport().y || 0) + 100
         };
         addNode('finallyBlock', position);
+      },
+    },
+    {
+      id: 'add-operation',
+      name: 'Add Operation',
+      shortcut: ['o'],
+      keywords: 'operation string list dict function method',
+      section: 'Data',
+      subtitle: 'Perform operations on strings, lists, or dictionaries',
+      perform: () => {
+        const nodes = useFlowStore.getState().nodes;
+        const lastNode = nodes[nodes.length - 1];
+        const position = lastNode ? {
+          x: lastNode.position.x,
+          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 100 // Add 100px padding between nodes
+        } : {
+          x: (reactFlowInstance?.getViewport().x || 0) + 100,
+          y: (reactFlowInstance?.getViewport().y || 0) + 100
+        };
+        addNode('operation', position);
       },
     },
   ], [reactFlowInstance, addNode]);

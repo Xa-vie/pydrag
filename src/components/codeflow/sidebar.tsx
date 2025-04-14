@@ -1,6 +1,6 @@
 import { memo, useState } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Terminal, ChevronRight, GitBranch, Repeat, Code2, ArrowRightLeft, Database, Trash2, Code, Play, type LucideIcon, GripVertical, Check, Copy, Download, PanelLeft, X, FileQuestion, MessageCircleQuestion, Sparkles, ArrowUpDown, Expand, Loader2, ArrowRight, HelpCircle } from 'lucide-react';
+import { Terminal, GitBranch, Repeat, Code2, ArrowRightLeft, Play, PanelLeft, Sparkles, ArrowUpDown, ArrowRight, HelpCircle, Wrench } from 'lucide-react';
 import { Keyboard, Variable as VariableIcon, Braces, AlertTriangle, MessageSquare, ListTree, KeyRound, Type, SquareCode, CircleDashed } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../ui/button';
@@ -17,6 +17,7 @@ const nodeCategories = [
       { type: 'variable', label: 'Variable', icon: VariableIcon, description: 'Define and store data values' },
       { type: 'print', label: 'Output', icon: Terminal, description: 'Display values and messages' },
       { type: 'return', label: 'Return', icon: ArrowRight, description: 'Return a value from a function' },
+      { type: 'operation', label: 'Operation', icon: Wrench, description: 'Perform operations on variables' },
     ],
   },
   {
@@ -90,7 +91,8 @@ const Sidebar = memo(() => {
     'exceptBlock': 'X',
     'finallyBlock': 'Y',
     'comment': 'A',
-    'database': 'D'
+    'database': 'D',
+    'operation': 'O'
   };
 
   return (
