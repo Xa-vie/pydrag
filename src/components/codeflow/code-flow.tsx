@@ -225,14 +225,6 @@ export function CodeFlow() {
     }
   }, [deleteKeyPressed]);
 
-  // Handle clear canvas shortcut (Ctrl+Shift+C)
-  const clearCanvasShortcut = useKeyPress(['Control', 'Shift', 'c']);
-  useEffect(() => {
-    if (clearCanvasShortcut) {
-      setIsClearDialogOpen(true);
-    }
-  }, [clearCanvasShortcut]);
-
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -724,9 +716,6 @@ console.log(nodes)
                       >
                         <Trash2 className="h-4 w-4" />
                         <span>Clear Canvas</span>
-                        <kbd className="pointer-events-none ml-1 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                          <span className="text-xs">Ctrl</span>+<span className="text-xs">Shift</span>+<span className="text-xs">C</span>
-                        </kbd>
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
