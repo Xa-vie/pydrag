@@ -151,6 +151,7 @@ interface FlowState {
   setVariable: (name: string, value: string, nodeId: string) => void;
   deleteVariable: (name: string) => void;
   getAllVariables: () => string[];
+  clearCanvas: () => void;
 }
 
 // Helper function to create initial node data
@@ -384,5 +385,13 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   },
   getAllVariables: () => {
     return Array.from(get().variables.keys());
+  },
+  clearCanvas: () => {
+    set({
+      nodes: [],
+      edges: [],
+      selectedNodes: [],
+      variables: new Map()
+    });
   },
 })); 

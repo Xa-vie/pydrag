@@ -11,6 +11,20 @@ import {
   useKeyPress,
   useOnSelectionChange,
 } from '@xyflow/react';
+import { Trash2 } from 'lucide-react';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const Controls = dynamic(() => import('@xyflow/react').then(mod => mod.Controls), {
   ssr: false,
@@ -176,6 +190,7 @@ const nodeTypes = {
 
 export function CodeFlow() {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   const {
     nodes,
@@ -185,6 +200,7 @@ export function CodeFlow() {
     onConnect,
     addNode,
     setSelectedNodes,
+    clearCanvas,
   } = useFlowStore();
 
   // Handle node selection
@@ -208,6 +224,14 @@ export function CodeFlow() {
       });
     }
   }, [deleteKeyPressed]);
+
+  // Handle clear canvas shortcut (Ctrl+Shift+C)
+  const clearCanvasShortcut = useKeyPress(['Control', 'Shift', 'c']);
+  useEffect(() => {
+    if (clearCanvasShortcut) {
+      setIsClearDialogOpen(true);
+    }
+  }, [clearCanvasShortcut]);
 
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
@@ -647,6 +671,10 @@ export function CodeFlow() {
     },
   ], [reactFlowInstance, addNode]);
 
+  const handleClearCanvas = useCallback(() => {
+    clearCanvas();
+    setIsClearDialogOpen(false);
+  }, [clearCanvas]);
 
 console.log(nodes)
   return (
@@ -680,6 +708,48 @@ console.log(nodes)
             <Suspense fallback={<CodePanelSkeleton />}>
               <CodePanel />
             </Suspense>
+          </Panel>
+          
+          {/* Clear Canvas Button */}
+          <Panel position="top-left" className="mt-2">
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="bg-background/80 backdrop-blur-sm border rounded-md shadow-md flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span>Clear Canvas</span>
+                        <kbd className="pointer-events-none ml-1 inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                          <span className="text-xs">Ctrl</span>+<span className="text-xs">Shift</span>+<span className="text-xs">C</span>
+                        </kbd>
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Clear Canvas</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to clear the canvas? This will remove all nodes and edges. This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleClearCanvas} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                          Clear Canvas
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">
+                  <p>Clear all nodes and edges from the canvas</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </Panel>
         </ReactFlow>
       </div>
