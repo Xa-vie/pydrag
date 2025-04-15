@@ -1,5 +1,4 @@
 import { memo, useState } from 'react';
-import { useReactFlow } from '@xyflow/react';
 import { Terminal, GitBranch, Repeat, Code2, ArrowRightLeft, Play, PanelLeft, Sparkles, ArrowUpDown, ArrowRight, HelpCircle, Wrench } from 'lucide-react';
 import { Keyboard, Variable as VariableIcon, Braces, AlertTriangle, MessageSquare, ListTree, KeyRound, Type, SquareCode, CircleDashed } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -69,9 +68,7 @@ const nodeCategories = [
 
 // Sidebar component
 const Sidebar = memo(() => {
-  const { getViewport } = useReactFlow();
   const [collapsed, setCollapsed] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   
   const onDragStart = (event: React.DragEvent, nodeType: string) => {
     event.dataTransfer.setData('application/reactflow', nodeType);

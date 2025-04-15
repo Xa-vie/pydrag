@@ -374,6 +374,7 @@ export function CodeFlow() {
       perform: () => {
         const nodes = useFlowStore.getState().nodes;
         const lastNode = nodes[nodes.length - 1];
+        console.log(lastNode)
         const position = lastNode ? {
           x: lastNode.position.x,
           y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 100 // Add 100px padding between nodes
@@ -645,6 +646,8 @@ export function CodeFlow() {
       },
     },
   ], [reactFlowInstance, addNode]);
+
+
 console.log(nodes)
   return (
     <div className="flex h-screen w-full border rounded-lg overflow-hidden" suppressHydrationWarning>
@@ -668,6 +671,7 @@ console.log(nodes)
           defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
           fitView={false}
           className="bg-background/50 backdrop-blur-[2px]"
+          panOnScroll
         >
           <Background variant={BackgroundVariant.Dots} gap={12} size={1} />
           <Controls className="bg-background/80 backdrop-blur-sm border rounded-md shadow-md" />

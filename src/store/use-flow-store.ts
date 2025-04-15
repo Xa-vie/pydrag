@@ -317,7 +317,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       type,
       position: lastNode ? {
         x: lastNode.position.x,
-        y: lastNode.position.y + (lastNode.data.measured?.height || 100) + 50 // Add 50px padding between nodes
+        y: lastNode.position.y + (lastNode.data.measured?.height || 300) + 50 // Add 50px padding between nodes
       } : position,
       data: data || createInitialNodeData(type),
     };
