@@ -1,6 +1,17 @@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { SparklesIcon, ArrowRightIcon } from 'lucide-react';
+import { 
+    SparklesIcon, 
+    ArrowRightIcon, 
+    KeyboardIcon, 
+    MousePointerIcon, 
+    TrashIcon, 
+    CodeIcon,
+    EyeIcon,
+    LayoutTemplateIcon,
+    UsersIcon,
+    BrainCircuitIcon
+} from 'lucide-react';
 import Link from 'next/link';
 import { cn } from "@/lib/utils";
 
@@ -8,32 +19,50 @@ const FEATURES = [
     {
         title: "Visual Programming",
         description: "Build Python applications using an intuitive drag-and-drop interface",
-        icon: SparklesIcon,
+        icon: MousePointerIcon,
+    },
+    {
+        title: "Keyboard Support",
+        description: "Navigate and manipulate blocks efficiently using keyboard shortcuts",
+        icon: KeyboardIcon,
+    },
+    {
+        title: "Cursor Navigation",
+        description: "Easily move blocks around your canvas using arrow keys for precise positioning",
+        icon: ArrowRightIcon,
+    },
+    {
+        title: "Block Deletion",
+        description: "Quickly remove unwanted elements with dedicated delete functionality",
+        icon: TrashIcon,
     },
     {
         title: "Real-time Preview",
         description: "See your changes instantly as you build your application",
-        icon: SparklesIcon,
-    },
-    {
-        title: "AI Assistance",
-        description: "Get intelligent suggestions and code completion as you work",
-        icon: SparklesIcon,
+        icon: EyeIcon,
     },
     {
         title: "Code Export",
         description: "Export your visual programs as clean, well-documented Python code",
-        icon: SparklesIcon,
+        icon: CodeIcon,
     },
     {
-        title: "Collaboration",
-        description: "Work together with your team in real-time",
-        icon: SparklesIcon,
-    },
-    {
-        title: "Templates",
+        title: "Templates (Coming Soon)",
         description: "Start quickly with pre-built templates for common use cases",
-        icon: SparklesIcon,
+        icon: LayoutTemplateIcon,
+        upcoming: true,
+    },
+    {
+        title: "Collaboration (Coming Soon)",
+        description: "Work together with your team in real-time on shared projects",
+        icon: UsersIcon,
+        upcoming: true,
+    },
+    {
+        title: "AI Assistance (Coming Soon)",
+        description: "Get intelligent suggestions and code completion as you work",
+        icon: BrainCircuitIcon,
+        upcoming: true,
     },
 ];
 
@@ -63,18 +92,39 @@ export function FeaturesSection() {
                     {FEATURES.map((feature, index) => (
                         <div
                             key={index}
-                            className="group relative bg-background rounded-2xl p-8 border border-border hover:shadow-lg transition-all duration-300 overflow-hidden"
+                            className={cn(
+                                "group relative bg-background rounded-2xl p-8 border transition-all duration-300 overflow-hidden",
+                                feature.upcoming 
+                                    ? "border-dashed border-border/70" 
+                                    : "border-border hover:shadow-lg"
+                            )}
                         >
-                            <div className="absolute -inset-1 bg-gradient-to-br from-primary/10 via-transparent to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl blur-sm" />
+                            <div className={cn(
+                                "absolute -inset-1 bg-gradient-to-br opacity-0 transition-opacity rounded-2xl blur-sm",
+                                feature.upcoming 
+                                    ? "from-blue-500/5 via-transparent to-blue-500/5 group-hover:opacity-70" 
+                                    : "from-primary/10 via-transparent to-blue-500/10 group-hover:opacity-100"
+                            )} />
                             <div className="relative z-10">
+                                {feature.upcoming && (
+                                    <Badge className="absolute top-0 right-0 bg-blue-500/10 text-blue-500 border-blue-500/20 text-xs">
+                                        Coming Soon
+                                    </Badge>
+                                )}
                                 <div className={cn(
                                     "mb-6 inline-flex h-14 w-14 items-center justify-center rounded-xl transition-all duration-300",
-                                    "bg-primary/10 text-primary",
-                                    "group-hover:bg-primary/20"
+                                    feature.upcoming 
+                                        ? "bg-blue-500/10 text-blue-500" 
+                                        : "bg-primary/10 text-primary group-hover:bg-primary/20"
                                 )}>
                                     <feature.icon className="h-6 w-6" />
                                 </div>
-                                <h3 className="text-xl font-semibold mb-4 text-foreground group-hover:text-primary transition-colors duration-300">
+                                <h3 className={cn(
+                                    "text-xl font-semibold mb-4 transition-colors duration-300",
+                                    feature.upcoming 
+                                        ? "text-foreground/80" 
+                                        : "text-foreground group-hover:text-primary"
+                                )}>
                                     {feature.title}
                                 </h3>
                                 <p className="text-muted-foreground leading-relaxed">
