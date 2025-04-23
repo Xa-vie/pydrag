@@ -52,7 +52,7 @@ const FunctionNode = memo(({ data, id, selected }: NodeComponentProps<FunctionNo
 
   return (
     <NodeWrapper 
-      onDelete={() => deleteNode(id)}
+      id={id}
       icon={Code2}
       label="Function"
       selected={selected}
@@ -144,7 +144,7 @@ const FunctionNode = memo(({ data, id, selected }: NodeComponentProps<FunctionNo
         </div>
 
         <p className={nodeStyles.hint}>
-          Connect nodes to the body handle to define function contents
+          Place nodes below this block to add them to this function's body
         </p>
       </div>
     </NodeWrapper>
