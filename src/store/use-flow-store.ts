@@ -246,8 +246,14 @@ const createInitialNodeData = (type: string): NodeData => {
         resultVariable: '',
         generateComment: false
       };
-    case 'print':
     case 'return':
+      return {
+        ...baseData,
+        type: 'return' as const,
+        label: 'Return',
+        returnValue: ''
+      };
+    case 'print':
     default:
       return {
         ...baseData,
@@ -318,7 +324,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       type,
       position: lastNode ? {
         x: lastNode.position.x,
-        y: lastNode.position.y + (lastNode.data.measured?.height || 300) + 50 // Add 50px padding between nodes
+        y: lastNode.position.y + (lastNode.data.measured?.height || 300) + 100 // Add 100px padding between nodes
       } : position,
       data: data || createInitialNodeData(type),
     };

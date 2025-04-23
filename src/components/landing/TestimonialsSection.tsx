@@ -12,7 +12,7 @@ const TESTIMONIALS = [
         textColor: "text-green-500"
     },
     {
-        quote: "As a professional developer, I use PyDrag for rapid prototyping. It's incredible how quickly I can test new ideas and visualize data flows.",
+        quote: "As a professional developer, I use PyDrag for rapid prototyping. It&apos;s incredible how quickly I can test new ideas and visualize data flows.",
         author: "Michael Rodriguez",
         role: "Senior Software Engineer",
         company: "Dataflow Systems",
@@ -79,7 +79,7 @@ export function TestimonialsSection() {
                             
                             <div className="relative z-10">
                                 <p className="text-foreground/90 mb-6 leading-relaxed">
-                                    "{testimonial.quote}"
+                                &quot;{testimonial.quote}&quot;
                                 </p>
                                 
                                 <div className="flex items-center">

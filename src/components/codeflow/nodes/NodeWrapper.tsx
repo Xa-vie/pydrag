@@ -28,28 +28,28 @@ const NodeWrapper = ({
     <div className={clsx(
       "relative",
       "min-w-[280px] max-w-[320px]",
-      "rounded-lg border",
+      "rounded-lg border-2",
       "bg-background/95 backdrop-blur-sm",
       "transition-all duration-300 ease-in-out",
       selected 
-        ? "ring-2 ring-primary/70 shadow-[0_0_15px_rgba(var(--primary)/0.15)] border-primary/40" 
-        : "shadow-sm hover:shadow-md border-border/50 hover:border-border/80",
+        ? "ring-2 ring-primary shadow-[0_0_20px_rgba(var(--primary)/0.25)] border-primary/80" 
+        : "shadow-md hover:shadow-lg border-border hover:border-border/90",
       "group"
     )}>
       <div className={clsx(
-        "flex items-center gap-2 p-2 border-b",
-        "bg-background/80 backdrop-blur-sm",
-        selected ? "border-primary/30" : "border-border/60"
+        "flex items-center gap-2 p-2 border-b-2",
+        "bg-background/90 backdrop-blur-sm",
+        selected ? "border-primary/60" : "border-border/70"
       )}>
         <div className="flex items-center gap-2 flex-1">
           <div className={clsx(
             "p-1.5 rounded-md",
-            selected ? "bg-primary/20" : "bg-primary/10",
+            selected ? "bg-primary/30" : "bg-primary/20",
             "transition-colors duration-300"
           )}>
             <Icon className={clsx(
               "h-4 w-4", 
-              selected ? "text-primary" : "text-primary/80",
+              selected ? "text-primary" : "text-primary/90",
               "transition-colors duration-300"
             )} />
           </div>
@@ -63,8 +63,8 @@ const NodeWrapper = ({
             }}
             className={clsx(
               "p-1.5 rounded-md transition-colors",
-              "opacity-70 hover:opacity-100",
-              "hover:bg-destructive/10 hover:text-destructive"
+              "opacity-80 hover:opacity-100",
+              "hover:bg-destructive/15 hover:text-destructive"
             )}
             aria-label="Delete node"
           >
