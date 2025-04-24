@@ -144,7 +144,7 @@ const FunctionNode = memo(({ data, id, selected }: NodeComponentProps<FunctionNo
         </div>
 
         <p className={nodeStyles.hint}>
-          Place nodes below this block to add them to this function's body
+          Place nodes below this block to add them to this function&apos;s body
         </p>
       </div>
     </NodeWrapper>
