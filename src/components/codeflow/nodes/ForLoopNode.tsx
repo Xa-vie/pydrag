@@ -5,13 +5,20 @@ import { Repeat } from 'lucide-react';
 import { useFlowStore } from '@/store/use-flow-store';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
+import { findParentFunctionNodeByPosition } from '../utils';
 
 const ForLoopNode = memo(({ data, id, selected }: NodeComponentProps<ForLoopNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
   const [loopType, setLoopType] = useState<'range' | 'collection' | 'enumerate'>('range');
   const availableVariables = getAllVariables();
+  const nodes = getNodes();
+  const edges = getEdges();
+  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
+  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
 
   // Loop type specific state
   const [rangeStart, setRangeStart] = useState('0');
@@ -211,6 +218,51 @@ const ForLoopNode = memo(({ data, id, selected }: NodeComponentProps<ForLoopNode
     </div>
   );
 
+  const renderVariableSuggestions = () => {
+    if (!availableVariables.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Variables:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableVariables.map(varName => {
+            const value = getVariable(varName);
+            return (
+              <button
+                key={varName}
+                onClick={() => setIterableVar(varName)}
+                className={nodeStyles.suggestions.item}
+                title={`Value: ${value}`}
+              >
+                {varName}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  const renderParameterSuggestions = () => {
+    if (!availableParameters.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableParameters.map(param => (
+            <button
+              key={param}
+              onClick={() => setIterableVar(param)}
+              className={nodeStyles.suggestions.item}
+              title={`Parameter: ${param}`}
+            >
+              {param}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <NodeWrapper 
       id={id}
@@ -251,6 +303,9 @@ const ForLoopNode = memo(({ data, id, selected }: NodeComponentProps<ForLoopNode
           </div>
         </div>
       </div>
+
+      {renderVariableSuggestions()}
+      {renderParameterSuggestions()}
 
       {/* <Handle 
         type="source" 

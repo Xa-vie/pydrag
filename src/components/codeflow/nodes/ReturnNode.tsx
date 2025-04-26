@@ -5,6 +5,7 @@ import { useFlowStore } from '@/store/use-flow-store';
 import { nodeStyles } from './nodeStyles';
 import { clsx } from 'clsx';
 import { NodeComponentProps, BaseNodeData } from './types';
+import { findParentFunctionNodeByPosition } from '../utils';
 
 interface ReturnNodeData extends BaseNodeData {
   type: 'return';
@@ -15,6 +16,8 @@ const ReturnNode = memo(({ data, id, selected }: NodeComponentProps<ReturnNodeDa
   const updateNode = useFlowStore(state => state.updateNode);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
   const [searchTerm, setSearchTerm] = useState('');
 
   const availableVariables = getAllVariables();
@@ -22,11 +25,37 @@ const ReturnNode = memo(({ data, id, selected }: NodeComponentProps<ReturnNodeDa
     varName.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  const nodes = getNodes();
+  const edges = getEdges();
+  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
+  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
+
   const handleReturnValueSelect = (value: string) => {
     updateNode(id, {
       ...data,
       returnValue: value
     });
+  };
+
+  const renderParameterSuggestions = () => {
+    if (!availableParameters.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableParameters.map(param => (
+            <button
+              key={param}
+              onClick={() => handleReturnValueSelect(param)}
+              className={nodeStyles.suggestions.item}
+              title={`Parameter: ${param}`}
+            >
+              {param}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -72,6 +101,7 @@ const ReturnNode = memo(({ data, id, selected }: NodeComponentProps<ReturnNodeDa
                 )}
               </div>
             </div>
+            {renderParameterSuggestions()}
           </div>
         ) : (
           <div className="space-y-4">

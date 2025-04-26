@@ -4,8 +4,6 @@ import { usePython as useReactPy } from 'react-py';
 export function usePython() {
   // const [isReady, setIsReady] = useState(false);
   const { runPython, stdout, stderr, isLoading, isRunning, isReady } = useReactPy();
-  console.log("loading", isLoading, "running", isRunning, "ready", isReady)
-
   
   const handleRunCode = async (code: string) => {
     try {

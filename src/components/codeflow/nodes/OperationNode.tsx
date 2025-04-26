@@ -5,14 +5,22 @@ import { OperationNodeData, NodeComponentProps } from './types';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
 import { Wrench, ChevronDown, Info, AlertCircle, Search } from 'lucide-react';
+import { findParentFunctionNodeByPosition } from '../utils';
 
 const OperationNode = memo(({ data, id, selected }: NodeComponentProps<OperationNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
   const [resultVariable, setResultVariable] = useState(data.resultVariable || '');
   const [operationError, setOperationError] = useState<string | null>(null);
   const [showParameterSuggestions, setShowParameterSuggestions] = useState<number | null>(null);
+
+  const nodes = getNodes();
+  const edges = getEdges();
+  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
+  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
 
   // Get all available variables with their types
   const availableVariables = useMemo(() => {
@@ -403,6 +411,27 @@ const OperationNode = memo(({ data, id, selected }: NodeComponentProps<Operation
     );
   };
 
+  const renderParameterSuggestions = (paramIndex: number) => {
+    if (!availableParameters.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableParameters.map(param => (
+            <button
+              key={param}
+              onClick={() => handleParameterChange(paramIndex, param)}
+              className={nodeStyles.suggestions.item}
+              title={`Parameter: ${param}`}
+            >
+              {param}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <NodeWrapper
       id={id}
@@ -481,6 +510,7 @@ const OperationNode = memo(({ data, id, selected }: NodeComponentProps<Operation
                 placeholder={`Enter ${getParameterLabels()[index].toLowerCase()}`}
               />
               {showParameterSuggestions === index && renderParameterVariableSuggestions(index)}
+              {showParameterSuggestions === index && renderParameterSuggestions(index)}
             </div>
           </div>
         ))}

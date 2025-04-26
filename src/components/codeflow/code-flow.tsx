@@ -390,7 +390,6 @@ export function CodeFlow() {
       perform: () => {
         const nodes = useFlowStore.getState().nodes;
         const lastNode = nodes[nodes.length - 1];
-        console.log(lastNode)
         const position = lastNode ? {
           x: lastNode.position.x,
           y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
@@ -688,7 +687,6 @@ export function CodeFlow() {
     setIsClearDialogOpen(false);
   }, [clearCanvas]);
 
-console.log(nodes)
   return (
     <div className="flex h-screen w-full border rounded-lg overflow-hidden" suppressHydrationWarning>
       <Suspense fallback={<SidebarSkeleton />}>

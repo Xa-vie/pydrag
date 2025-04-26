@@ -5,6 +5,7 @@ import NodeWrapper from './NodeWrapper';
 import { VariableNodeData, NodeComponentProps } from './types';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
+import { findParentFunctionNodeByPosition } from '../utils';
 
 interface DictItem {
   key: string;
@@ -17,6 +18,8 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
   const deleteVariable = useFlowStore(state => state.deleteVariable);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
   const [nameError, setNameError] = useState<string | null>(null);
   const [newListItem, setNewListItem] = useState('');
   const [newDictKey, setNewDictKey] = useState('');
@@ -43,6 +46,11 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     const allVars = getAllVariables();
     return allVars.filter(varName => varName !== data.name);
   }, [getAllVariables, data.name]);
+
+  const nodes = getNodes();
+  const edges = getEdges();
+  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
+  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
 
   // Validate Python variable name
   const validateVariableName = (name: string): string | null => {
@@ -237,6 +245,27 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
     }
   };
 
+  const renderParameterSuggestions = () => {
+    if (!availableParameters.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableParameters.map(param => (
+            <button
+              key={param}
+              onClick={() => handleNameChange({ target: { value: param } } as any)}
+              className={nodeStyles.suggestions.item}
+              title={`Parameter: ${param}`}
+            >
+              {param}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <NodeWrapper 
       id={id}
@@ -388,6 +417,8 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
             </div>
           </div>
         )}
+
+        {renderParameterSuggestions()}
       </div>
     </NodeWrapper>
   );

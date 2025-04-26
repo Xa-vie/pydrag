@@ -5,12 +5,19 @@ import { useFlowStore } from '@/store/use-flow-store';
 import { ElifNodeData, NodeComponentProps } from './types';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
+import { findParentFunctionNodeByPosition } from '../utils';
 
 const ElifNode = memo(({ data, id, selected }: NodeComponentProps<ElifNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
+  const nodes = getNodes();
+  const edges = getEdges();
+  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
   const availableVariables = getAllVariables();
+  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
 
   const handleConditionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     updateNode(id, {
@@ -44,6 +51,27 @@ const ElifNode = memo(({ data, id, selected }: NodeComponentProps<ElifNodeData>)
     );
   };
 
+  const renderParameterSuggestions = () => {
+    if (!availableParameters.length) return null;
+    return (
+      <div className={nodeStyles.suggestions.container}>
+        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
+        <div className={nodeStyles.suggestions.list}>
+          {availableParameters.map(param => (
+            <button
+              key={param}
+              onClick={() => handleConditionChange({ target: { value: param } } as any)}
+              className={nodeStyles.suggestions.item}
+              title={`Parameter: ${param}`}
+            >
+              {param}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <NodeWrapper 
       id={id}
@@ -65,6 +93,7 @@ const ElifNode = memo(({ data, id, selected }: NodeComponentProps<ElifNodeData>)
             />
           </div>
           {renderVariableSuggestions()}
+          {renderParameterSuggestions()}
         </div>
 
         <p className={nodeStyles.hint}>
