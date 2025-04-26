@@ -59,9 +59,11 @@ const CodePanel = memo(() => {
     const limitedLines = limit ? lines.slice(0, limit) : lines;
     
     return limitedLines.map((line, i) => (
-      <div key={i} className="flex group">
-        <span className="text-muted-foreground/60 w-8 text-right pr-2 select-none group-hover:text-muted-foreground transition-colors">{i + 1}</span>
-        <span className="flex-1 group-hover:bg-muted/30 transition-colors rounded px-1">{line}</span>
+      <div key={i} className="flex group items-center">
+        <span className="w-10 text-right pr-3 select-none font-bold text-transparent bg-clip-text bg-gradient-to-r from-primary to-fuchsia-500 group-hover:from-fuchsia-500 group-hover:to-primary transition-colors">
+          {i + 1}
+        </span>
+        <span className="flex-1 group-hover:bg-primary/10 transition-colors rounded px-1 font-mono text-[13px]">{line}</span>
       </div>
     ));
   };
@@ -73,25 +75,24 @@ const CodePanel = memo(() => {
   return (
     <>
       {/* Compact Preview Card */}
-      <div className="w-80 bg-background/95 backdrop-blur-md border-2 border-border rounded-xl shadow-md overflow-hidden">
-        <div className="p-3 border-b-2 border-border bg-background/90 flex items-center justify-between">
-          <div className="flex items-center gap-2 flex-1">
+      <div className="w-80 relative overflow-hidden rounded-2xl border border-border shadow-lg shadow-primary/20 bg-background/80 backdrop-blur-xl transition-all duration-300 hover:scale-[1.01]">
+        {/* Animated Accent Bar */}
+        <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-primary via-fuchsia-500 to-cyan-400 animate-gradient-y z-10" />
+        <div className="relative z-20 p-4 border-b border-border bg-gradient-to-r from-primary/20 via-background/80 to-background/60 flex items-center justify-between">
+          <div className="flex items-center gap-3 flex-1">
             <div className={clsx(
-              "flex items-center justify-center h-7 w-7 rounded-full bg-primary/20",
+              "flex items-center justify-center h-9 w-9 rounded-xl bg-primary/90 text-white shadow-lg transition-transform duration-200 hover:scale-110",
               isFileNameFocused ? "ring-2 ring-primary/40" : ""
             )}>
-              <FileCode2 size={16} className={clsx(
-                "transition-colors duration-200",
-                isFileNameFocused ? "text-primary" : "text-primary/80"
-              )} />
+              <FileCode2 size={22} />
             </div>
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div 
                     className={clsx(
-                      "flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200 flex-1 group cursor-text",
-                      isFileNameFocused ? "bg-muted/80" : "hover:bg-muted/50"
+                      "flex items-center gap-2 px-3 py-1.5 rounded-lg transition-all duration-200 flex-1 group cursor-text bg-background/60 border border-border/60",
+                      isFileNameFocused ? "ring-2 ring-primary/30" : "hover:bg-background/80"
                     )}
                     onMouseEnter={() => setIsFileNameHovered(true)}
                     onMouseLeave={() => setIsFileNameHovered(false)}
@@ -101,13 +102,13 @@ const CodePanel = memo(() => {
                       onChange={(e) => setFileName(e.target.value)}
                       onFocus={() => setIsFileNameFocused(true)}
                       onBlur={() => setIsFileNameFocused(false)}
-                      className="h-5 text-xs w-[100px] bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50"
+                      className="h-6 text-sm w-[120px] bg-transparent border-0 p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground/50 font-semibold"
                       placeholder="Untitled"
                     />
                     <Pencil 
-                      size={12} 
+                      size={14} 
                       className={clsx(
-                        "text-muted-foreground/50 transition-opacity duration-200",
+                        "text-primary/80 transition-opacity duration-200",
                         isFileNameHovered || isFileNameFocused ? "opacity-100" : "opacity-0"
                       )}
                     />
@@ -119,54 +120,54 @@ const CodePanel = memo(() => {
               </Tooltip>
             </TooltipProvider>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-2">
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow transition hover:bg-primary/20"
               onClick={copyToClipboard}
               title="Copy code"
             >
-              {copied ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+              {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow transition hover:bg-primary/20"
               onClick={downloadCode}
               title="Download code"
             >
-              <Download className="h-3.5 w-3.5" />
+              <Download className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
+              size="icon"
+              className="h-9 w-9 rounded-full shadow transition hover:bg-primary/20"
               onClick={() => setDialogOpen(true)}
               title="View full code"
             >
-              <Expand className="h-3.5 w-3.5" />
+              <Expand className="h-4 w-4" />
             </Button>
             <Button
               variant={hasOutput ? "ghost" : "default"}
-              size="sm"
+              size="icon"
               className={clsx(
-                "h-7 w-7 p-0 rounded-md", 
-                hasOutput ? "text-primary hover:bg-primary/10 dark:hover:bg-primary/20" : "bg-primary text-primary-foreground hover:bg-primary/90"
+                "h-9 w-9 rounded-full shadow transition",
+                hasOutput ? "text-primary hover:bg-primary/20" : "bg-gradient-to-tr from-primary to-fuchsia-500 text-white hover:from-primary/90 hover:to-fuchsia-400"
               )}
               onClick={handleRunCode}
               disabled={isLoading}
               title={isLoading ? "Running..." : "Run code"}
             >
               {isLoading 
-                ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> 
-                : <Play className="h-3.5 w-3.5" />}
+                ? <Loader2 className="h-4 w-4 animate-spin" /> 
+                : <Play className="h-4 w-4" />}
             </Button>
           </div>
         </div>
         
         {/* Tabs for code and output */}
-        <div className="border-b bg-muted/40 px-2 pt-1.5">
+        <div className="border-b bg-background/60 px-2 pt-2 relative z-20">
           <div className="flex gap-1">
             <button
               className={clsx(
@@ -199,10 +200,10 @@ const CodePanel = memo(() => {
         </div>
         
         {/* Content area */}
-        <div className="max-h-60 overflow-auto">
+        <div className="max-h-60 overflow-auto bg-zinc-900/80 dark:bg-zinc-900/90 border-x border-b border-zinc-800/40 rounded-b-2xl relative z-20">
           {activeTab === 'code' ? (
-            <pre className="p-2 text-xs">
-              <code className="font-mono">
+            <pre className="p-3 text-sm font-mono leading-relaxed">
+              <code className="block">
                 {renderCodePreview(generatedCode, previewLength)}
                 {shouldTruncate && (
                   <div 
