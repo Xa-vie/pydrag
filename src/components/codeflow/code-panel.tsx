@@ -75,7 +75,7 @@ const CodePanel = memo(() => {
   return (
     <>
       {/* Compact Preview Card */}
-      <div className="w-80 relative overflow-hidden rounded-2xl border border-border shadow-lg shadow-primary/20 bg-background/80 backdrop-blur-xl transition-all duration-300 hover:scale-[1.01]">
+      <div className="w-[28dvw] relative overflow-hidden rounded-2xl border border-border shadow-lg shadow-primary/20 bg-background/80 backdrop-blur-xl transition-all duration-300 hover:scale-[1.01]">
         {/* Animated Accent Bar */}
         <div className="absolute left-0 top-0 h-full w-2 bg-gradient-to-b from-primary via-fuchsia-500 to-cyan-400 animate-gradient-y z-10" />
         <div className="relative z-20 p-4 border-b border-border bg-gradient-to-r from-primary/20 via-background/80 to-background/60 flex items-center justify-between">
