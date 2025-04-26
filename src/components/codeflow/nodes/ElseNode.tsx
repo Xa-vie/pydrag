@@ -10,6 +10,7 @@ const ElseNode = memo(({ data, id, selected }: NodeComponentProps<ElseNodeData>)
       icon={GitBranch}
       label="Else"
       selected={selected}
+      category="logic"
     >
       <div className="space-y-4">
         <div className="rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">

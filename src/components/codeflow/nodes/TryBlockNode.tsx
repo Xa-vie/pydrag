@@ -6,33 +6,15 @@ import { TryNodeData, NodeComponentProps } from './types';
 import { nodeStyles } from './nodeStyles';
 
 const TryBlockNode = memo(({ data, id, selected }: NodeComponentProps<TryNodeData>) => {
-  const updateNode = useFlowStore(state => state.updateNode);
-
-  const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateNode(id, {
-      ...data,
-      code: e.target.value
-    });
-  };
-
   return (
     <NodeWrapper 
       id={id}
       icon={Braces}
       label="Try Block"
       selected={selected}
+      category="errorHandling"
     >
-      <div className="space-y-4">
-        <div>
-          <label className={nodeStyles.label}>Code to Try</label>
-          <input
-            value={data.code || ''}
-            onChange={handleCodeChange}
-            placeholder="Code that might raise an exception..."
-            className={nodeStyles.input}
-          />
-        </div>
-      </div>
+      <div className="text-xs text-muted-foreground italic p-2">Place the code you want to try under this block.</div>
     </NodeWrapper>
   );
 });

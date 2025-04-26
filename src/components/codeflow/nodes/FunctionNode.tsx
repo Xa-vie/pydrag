@@ -54,8 +54,9 @@ const FunctionNode = memo(({ data, id, selected }: NodeComponentProps<FunctionNo
     <NodeWrapper 
       id={id}
       icon={Code2}
-      label="Function"
+      label={data.label || "Function"}
       selected={selected}
+      category="functions"
     >
       <div className="space-y-4">
         <div>

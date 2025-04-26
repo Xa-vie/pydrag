@@ -39,6 +39,7 @@ const CommentNode = memo(({ data, id, selected }: NodeComponentProps<CommentNode
         icon={Code}
         label="Comment"
         selected={selected}
+        category="annotations"
       >
         <div className="space-y-4">
           <div>

@@ -14,28 +14,28 @@ const nodeCategories = [
     label: 'Core Elements',
     description: 'Essential building blocks',
     items: [
-      { type: 'variable', label: 'Variable', icon: VariableIcon, description: 'Define and store data values' },
-      { type: 'print', label: 'Output', icon: Terminal, description: 'Display values and messages' },
-      { type: 'return', label: 'Return', icon: ArrowRight, description: 'Return a value from a function' },
-      { type: 'operation', label: 'Operation', icon: Wrench, description: 'Perform operations on variables' },
+      { type: 'variable', label: 'Variable', icon: VariableIcon, description: 'Create and store a value in memory' },
+      { type: 'print', label: 'Print', icon: Terminal, description: 'Show a value or message on the output' },
+      { type: 'return', label: 'Return', icon: ArrowRight, description: 'Send a value back from a function' },
+      { type: 'operation', label: 'Operation', icon: Wrench, description: 'Do math or logic with variables' },
     ],
   },
   {
     id: 'logic',
     label: 'Logic',
-    description: 'Conditional flow control',
+    description: 'Control the flow with conditions',
     items: [
-      { type: 'ifBlock', label: 'Condition', icon: GitBranch, description: 'Create conditional logic branches' },
-      { type: 'elifBlock', label: 'Alternate', icon: ListTree, description: 'Add alternative conditions' },
-      { type: 'elseBlock', label: 'Default', icon: ArrowRightLeft, description: 'Fallback path for conditions' },
+      { type: 'ifBlock', label: 'If', icon: GitBranch, description: 'Run code only if a condition is true' },
+      { type: 'elifBlock', label: 'Else If', icon: ListTree, description: 'Check another condition if previous is false' },
+      { type: 'elseBlock', label: 'Else', icon: ArrowRightLeft, description: 'Run code if no conditions above are true' },
     ],
   },
   {
     id: 'loops',
     label: 'Loops',
-    description: 'Iteration structures',
+    description: 'Repeat actions multiple times',
     items: [
-      { type: 'forLoop', label: 'Loop', icon: Repeat, description: 'Repeat operations multiple times' },
+      { type: 'forLoop', label: 'For Loop', icon: Repeat, description: 'Repeat code for each item or a number of times' },
     ],
   },
   {
@@ -43,29 +43,39 @@ const nodeCategories = [
     label: 'Functions',
     description: 'Reusable code blocks',
     items: [
-      { type: 'function', label: 'Define', icon: Code2, description: 'Create reusable functions' },
-      { type: 'functionCall', label: 'Call', icon: Play, description: 'Execute a defined function' },
+      { type: 'function', label: 'Define Function', icon: Code2, description: 'Create a named block of code to reuse' },
+      { type: 'functionCall', label: 'Call Function', icon: Play, description: 'Run a function you have defined' },
     ],
   },
   {
     id: 'errorHandling',
     label: 'Error Handling',
-    description: 'Manage exceptions',
+    description: 'Handle problems in your code',
     items: [
-      { type: 'tryBlock', label: 'Try', icon: Braces, description: 'Attempt code that might fail' },
-      { type: 'exceptBlock', label: 'Except', icon: AlertTriangle, description: 'Handle specific errors' },
-      { type: 'finallyBlock', label: 'Finally', icon: KeyRound, description: 'Always execute cleanup code' },
+      { type: 'tryBlock', label: 'Try', icon: Braces, description: 'Try code that might cause an error' },
+      { type: 'exceptBlock', label: 'Catch Error', icon: AlertTriangle, description: 'Respond if an error happens' },
+      { type: 'finallyBlock', label: 'Finally', icon: KeyRound, description: 'Always run this code, error or not' },
     ],
   },
   {
     id: 'annotations',
     label: 'Comments',
-    description: 'Documentation elements',
+    description: 'Add notes to your code',
     items: [
-      { type: 'comment', label: 'Comment', icon: MessageSquare, description: 'Add notes and documentation' },
+      { type: 'comment', label: 'Comment', icon: MessageSquare, description: 'Write a note for yourself or others' },
     ],
   }
 ];
+
+// Color map for categories (dark theme)
+const categoryColors: Record<string, string> = {
+  core: 'bg-blue-200 text-blue-900 dark:bg-blue-900 dark:text-blue-200',
+  logic: 'bg-green-200 text-green-900 dark:bg-green-900 dark:text-green-200',
+  loops: 'bg-yellow-200 text-yellow-900 dark:bg-yellow-800 dark:text-yellow-100',
+  functions: 'bg-purple-200 text-purple-900 dark:bg-purple-900 dark:text-purple-200',
+  errorHandling: 'bg-red-200 text-red-900 dark:bg-red-900 dark:text-red-200',
+  annotations: 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-200',
+};
 
 // Sidebar component
 const Sidebar = memo(() => {
@@ -212,45 +222,38 @@ const Sidebar = memo(() => {
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="px-3 pb-3 pt-1">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
                     {category.items.map((item) => {
                       const Icon = item.icon;
                       const shortcut = shortcuts[item.type];
-                      
+                      const colorClass = categoryColors[category.id] || 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-200';
                       return (
                         <div
                           key={item.type}
                           className={clsx(
-                            "group/item relative flex flex-col items-center justify-center rounded-md border-2 cursor-grab transition-all duration-200 active:scale-[0.98]",
-                            "p-2.5 bg-background hover:border-border",
-                            "hover:bg-accent/30 hover:shadow-md",
+                            "group/item relative flex flex-col items-center justify-between rounded-xl shadow-md cursor-grab transition-all duration-200 active:scale-95",
+                            "p-4 bg-white/80 dark:bg-zinc-900/80 hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/40 dark:hover:border-primary/60 backdrop-blur-md min-h-[120px] min-w-0"
                           )}
                           draggable
                           onDragStart={(event) => onDragStart(event, item.type)}
-                          title={`${item.label} ${shortcut ? `(${shortcut})` : ''}: ${item.description}`}
+                          title={`${item.label}: ${item.description}`}
                         >
                           <div className={clsx(
-                            "flex shrink-0 items-center justify-center rounded-md",
-                            "p-2 mb-1.5",
-                            "bg-primary/20 transition-colors group-hover/item:bg-primary/30"
+                            "flex items-center justify-center rounded-full mb-2",
+                            "h-12 w-12",
+                            colorClass,
+                            "shadow-sm border border-white/20 dark:border-zinc-700"
                           )}>
-                            <Icon className={clsx(
-                              "h-4 w-4",
-                              "text-primary/90 group-hover/item:text-primary transition-colors"
-                            )} />
+                            <Icon className="h-6 w-6" />
                           </div>
-                          <p className="text-xs tracking-tight font-medium text-center text-foreground/90 group-hover/item:text-foreground transition-colors">
-                            {item.label}
-                          </p>
+                          <span className="text-sm font-semibold text-foreground dark:text-zinc-100 text-center w-full truncate">{item.label}</span>
+                          <span className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 text-center w-full line-clamp-2">{item.description}</span>
                           {shortcut && (
-                            <div className={clsx(
-                              "absolute text-xs tracking-wide font-medium text-background bg-primary/70 backdrop-blur-sm px-1.5 py-0.5 rounded-sm shadow-sm transition-all",
-                              "top-1 right-1"
-                            )}>
+                            <span className="absolute top-2 right-2 text-xs font-bold text-primary/80 dark:text-primary/60 bg-primary/10 dark:bg-primary/30 px-2 py-0.5 rounded-lg shadow">
                               {shortcut}
-                            </div>
+                            </span>
                           )}
-                          <div className="absolute inset-0 rounded-md ring-1 ring-transparent ring-offset-background transition-all group-hover/item:ring-primary/60" />
+                          <div className="absolute inset-0 rounded-xl ring-1 ring-transparent ring-offset-background transition-all group-hover/item:ring-primary/60 pointer-events-none" />
                         </div>
                       );
                     })}
@@ -266,45 +269,39 @@ const Sidebar = memo(() => {
                 {category.items.map((item) => {
                   const Icon = item.icon;
                   const shortcut = shortcuts[item.type];
-                  
+                  const colorClass = categoryColors[category.id] || 'bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-gray-200';
                   return (
                     <TooltipProvider key={item.type}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div
                             className={clsx(
-                              "group/item relative flex flex-col items-center justify-center rounded-md border-2 cursor-grab transition-all duration-200 active:scale-[0.98]",
-                              "p-2 w-[40px] h-[40px]",
-                              "hover:bg-accent/30 hover:shadow-md",
+                              "group/item relative flex flex-col items-center justify-center rounded-xl shadow-md cursor-grab transition-all duration-200 active:scale-95",
+                              "p-2 w-[44px] h-[44px] bg-white/80 dark:bg-zinc-900/80 hover:bg-primary/10 dark:hover:bg-primary/20 border border-transparent hover:border-primary/40 dark:hover:border-primary/60 backdrop-blur-md"
                             )}
                             draggable
                             onDragStart={(event) => onDragStart(event, item.type)}
                           >
                             <div className={clsx(
-                              "flex shrink-0 items-center justify-center rounded-md",
-                              "p-1.5",
-                              "bg-primary/20 transition-colors group-hover/item:bg-primary/30"
+                              "flex items-center justify-center rounded-full",
+                              "h-8 w-8",
+                              colorClass,
+                              "shadow-sm border border-white/20 dark:border-zinc-700"
                             )}>
-                              <Icon className={clsx(
-                                "h-4 w-4",
-                                "text-primary/90 group-hover/item:text-primary transition-colors"
-                              )} />
+                              <Icon className="h-5 w-5" />
                             </div>
                             {shortcut && (
-                              <div className={clsx(
-                                "absolute text-xs font-medium text-background bg-primary/70 backdrop-blur-sm px-1.5 py-0.5 rounded shadow-sm transition-all",
-                                "top-0 right-0 -translate-y-1/3 translate-x-1/3 opacity-0 group-hover/item:opacity-100"
-                              )}>
+                              <span className="absolute top-1 right-1 text-xs font-bold text-primary/80 dark:text-primary/60 bg-primary/10 dark:bg-primary/30 px-1.5 py-0.5 rounded shadow">
                                 {shortcut}
-                              </div>
+                              </span>
                             )}
-                            <div className="absolute inset-0 rounded-md ring-1 ring-transparent ring-offset-background transition-all group-hover/item:ring-primary/60" />
+                            <div className="absolute inset-0 rounded-xl ring-1 ring-transparent ring-offset-background transition-all group-hover/item:ring-primary/60 pointer-events-none" />
                           </div>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="flex flex-col border-2">
+                        <TooltipContent side="right" className="flex flex-col border-2 max-w-[200px] dark:bg-zinc-900 dark:border-zinc-700 dark:text-zinc-100">
                           <span className="font-medium">{item.label}</span>
-                          <span className="text-xs text-foreground/80">{item.description}</span>
-                          {shortcut && <span className="text-xs mt-1 font-medium text-primary/90">Shortcut: {shortcut}</span>}
+                          <span className="text-xs text-foreground/80 dark:text-zinc-400">{item.description}</span>
+                          {shortcut && <span className="text-xs mt-1 font-medium text-primary/90 dark:text-primary/60">Shortcut: {shortcut}</span>}
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

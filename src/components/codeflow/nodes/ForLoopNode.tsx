@@ -217,6 +217,7 @@ const ForLoopNode = memo(({ data, id, selected }: NodeComponentProps<ForLoopNode
       icon={Repeat}
       label="For Loop"
       selected={selected}
+      category="loops"
     >
       {/* <Handle 
         type="target" 

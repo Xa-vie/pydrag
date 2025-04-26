@@ -35,6 +35,7 @@ const ReturnNode = memo(({ data, id, selected }: NodeComponentProps<ReturnNodeDa
       icon={ArrowRight}
       label="Return"
       selected={selected}
+      category="core"
     >
       <div className="space-y-4">
         {!data.returnValue ? (

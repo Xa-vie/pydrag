@@ -50,8 +50,9 @@ const FunctionCallNode = memo(({ data, id, selected }: NodeComponentProps<Functi
     <NodeWrapper 
       id={id}
       icon={Code2}
-      label="Function Call"
+      label="Call Function"
       selected={selected}
+      category="functions"
     >
       <div className="space-y-4">
         {!selectedFunction ? (

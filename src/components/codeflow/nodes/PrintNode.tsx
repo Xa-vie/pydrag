@@ -50,6 +50,7 @@ const PrintNode = memo(({ data, id, selected }: NodeComponentProps<PrintNodeData
       icon={Terminal}
       label="Print"
       selected={selected}
+      category="core"
     >
       <div className="space-y-4">
         <div>

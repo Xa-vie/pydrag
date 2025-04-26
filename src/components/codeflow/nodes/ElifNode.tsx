@@ -50,6 +50,7 @@ const ElifNode = memo(({ data, id, selected }: NodeComponentProps<ElifNodeData>)
       icon={GitBranch}
       label="Elif Condition"
       selected={selected}
+      category="logic"
     >
       <div className="space-y-4">
         <div>

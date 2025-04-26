@@ -38,6 +38,7 @@ const ExceptBlockNode = memo(({ data, id, selected }: NodeComponentProps<ExceptN
       icon={AlertTriangle}
       label="Except Block"
       selected={selected}
+      category="errorHandling"
     >
       <div className="space-y-4">
         <div>

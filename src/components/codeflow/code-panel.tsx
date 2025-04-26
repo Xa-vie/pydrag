@@ -73,14 +73,14 @@ const CodePanel = memo(() => {
   return (
     <>
       {/* Compact Preview Card */}
-      <div className="w-80 bg-background/95 backdrop-blur-sm border rounded-lg shadow-lg overflow-hidden">
-        <div className="border-b bg-muted/80 px-3 py-2 flex items-center justify-between">
+      <div className="w-80 bg-background/95 backdrop-blur-md border-2 border-border rounded-xl shadow-md overflow-hidden">
+        <div className="p-3 border-b-2 border-border bg-background/90 flex items-center justify-between">
           <div className="flex items-center gap-2 flex-1">
             <div className={clsx(
-              "p-1.5 rounded-md transition-colors duration-200",
-              isFileNameFocused ? "bg-primary/20" : "bg-primary/10"
+              "flex items-center justify-center h-7 w-7 rounded-full bg-primary/20",
+              isFileNameFocused ? "ring-2 ring-primary/40" : ""
             )}>
-              <FileCode2 size={14} className={clsx(
+              <FileCode2 size={16} className={clsx(
                 "transition-colors duration-200",
                 isFileNameFocused ? "text-primary" : "text-primary/80"
               )} />
@@ -123,7 +123,7 @@ const CodePanel = memo(() => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 hover:bg-muted/50"
+              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
               onClick={copyToClipboard}
               title="Copy code"
             >
@@ -132,7 +132,7 @@ const CodePanel = memo(() => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 hover:bg-muted/50"
+              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
               onClick={downloadCode}
               title="Download code"
             >
@@ -141,7 +141,7 @@ const CodePanel = memo(() => {
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 w-7 p-0 hover:bg-muted/50"
+              className="h-7 w-7 p-0 rounded-md hover:bg-primary/10 dark:hover:bg-primary/20"
               onClick={() => setDialogOpen(true)}
               title="View full code"
             >
@@ -151,8 +151,8 @@ const CodePanel = memo(() => {
               variant={hasOutput ? "ghost" : "default"}
               size="sm"
               className={clsx(
-                "h-7 w-7 p-0", 
-                hasOutput ? "text-primary hover:bg-muted/50" : "bg-primary text-primary-foreground hover:bg-primary/90"
+                "h-7 w-7 p-0 rounded-md", 
+                hasOutput ? "text-primary hover:bg-primary/10 dark:hover:bg-primary/20" : "bg-primary text-primary-foreground hover:bg-primary/90"
               )}
               onClick={handleRunCode}
               disabled={isLoading}

@@ -55,24 +55,24 @@ export const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: 
     case 'tryBlock':
       if (node.data.type === 'tryBlock') {
         let code = `${spaces}try:`;
-        code += generateBodyForHandle('out') || `\n${spaces}    pass`;
+        code += generateBodyForHandle('out') || `\n${spaces}`;
         return code;
       }
-      return `${spaces}try:\n${spaces}    pass`;
+      return `${spaces}try:\n${spaces}`;
     case 'exceptBlock':
       if (node.data.type === 'exceptBlock') {
         let code = `${spaces}except ${node.data.exceptionType || 'Exception'}:`;
-        code += generateBodyForHandle('out') || `\n${spaces}    pass`;
+        code += generateBodyForHandle('out') || `\n${spaces}`;
         return code;
       }
-      return `${spaces}except Exception:\n${spaces}    pass`;
+      return `${spaces}except Exception:\n${spaces}`;
     case 'finallyBlock':
       if (node.data.type === 'finallyBlock') {
         let code = `${spaces}finally:`;
-        code += generateBodyForHandle('out') || `\n${spaces}    pass`;
+        code += generateBodyForHandle('out') || `\n${spaces}`;
         return code;
       }
-      return `${spaces}finally:\n${spaces}    pass`;
+      return `${spaces}finally:\n${spaces}`;
     case 'print':
       if (node.data.type === 'print') {
         const message = node.data.message || 'Hello, World!';

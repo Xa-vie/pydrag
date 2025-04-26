@@ -15,6 +15,7 @@ const DatabaseNode = memo(({ data, id, selected }: NodeComponentProps<DatabaseNo
       icon={Database}
       label="Database"
       selected={selected}
+      category="core"
     >
       <div className="space-y-4">
         <div>

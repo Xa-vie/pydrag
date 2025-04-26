@@ -409,6 +409,7 @@ const OperationNode = memo(({ data, id, selected }: NodeComponentProps<Operation
       icon={Wrench}
       label="Operation"
       selected={selected}
+      category="core"
     >
       <div className="flex flex-col gap-3">
         {/* Variable Selection */}

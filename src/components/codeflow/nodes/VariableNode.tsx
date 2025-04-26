@@ -243,6 +243,7 @@ const VariableNode = memo(({ data, id, selected }: NodeComponentProps<VariableNo
       icon={ArrowRightLeft}
       label="Variable"
       selected={selected}
+      category="core"
     >
       <div className="space-y-4">
         {/* Variable Name Input */}

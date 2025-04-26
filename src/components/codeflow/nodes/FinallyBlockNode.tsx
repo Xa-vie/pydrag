@@ -10,6 +10,7 @@ const FinallyBlockNode = memo(({ data, id, selected }: NodeComponentProps<Finall
       icon={KeyRound}
       label="Finally Block"
       selected={selected}
+      category="errorHandling"
     >
       <div className="space-y-4">
         <div className="rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">

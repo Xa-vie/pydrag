@@ -89,6 +89,7 @@ const IfNode = memo(({ data, id, selected }: NodeComponentProps<IfNodeData>) => 
         icon={GitBranch}
         label="If Condition"
         selected={selected}
+        category="logic"
       >
         {/* <Handle 
           type="target" 
