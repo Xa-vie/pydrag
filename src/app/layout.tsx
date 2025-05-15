@@ -33,10 +33,10 @@ export default async function RootLayout({
             {children}
           </Providers>
         {/* </NuqsAdapter> */}
-        {/* <script
+        <script
           crossOrigin="anonymous"
           src="//unpkg.com/react-scan/dist/auto.global.js"
-        /> */}
+        />
         </body>
     </html>
   );

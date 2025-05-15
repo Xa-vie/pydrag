@@ -135,27 +135,6 @@ export type NodeData =
   | ReturnNodeData
   | OperationNodeData;
 
-interface FlowState {
-  nodes: Node<NodeData>[];
-  edges: Edge[];
-  selectedNodes: Node<NodeData>[];
-  variables: Map<string, { value: string; nodeId: string }>;
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
-  onConnect: OnConnect;
-  addNode: (type: string, position: { x: number; y: number }, data?: NodeData) => void;
-  updateNode: (id: string, data: Partial<NodeData>) => void;
-  deleteNode: (id: string) => void;
-  setSelectedNodes: (nodes: Node<NodeData>[]) => void;
-  getVariable: (name: string) => string | undefined;
-  setVariable: (name: string, value: string, nodeId: string) => void;
-  deleteVariable: (name: string) => void;
-  getAllVariables: () => string[];
-  clearCanvas: () => void;
-  getNodes: () => Node<NodeData>[];
-  getEdges: () => Edge[];
-}
-
 // Helper function to create initial node data
 const createInitialNodeData = (type: string): NodeData => {
   const baseData = {
@@ -267,12 +246,9 @@ const createInitialNodeData = (type: string): NodeData => {
   }
 };
 
-// Add initial edges
-const initialEdges: Edge[] = [
+// Initial values
+const initialEdges: Edge[] = [];
 
-];
-
-// Initial nodes with comments and examples
 const initialNodes: Node<NodeData>[] = [
   {
     id: 'comment1',
@@ -298,24 +274,49 @@ const initialNodes: Node<NodeData>[] = [
   }
 ];
 
-export const useFlowStore = create<FlowState>((set, get) => ({
+// Define slice types
+interface NodesSlice {
+  nodes: Node<NodeData>[];
+  onNodesChange: OnNodesChange;
+  addNode: (type: string, position: { x: number; y: number }, data?: NodeData) => void;
+  updateNode: (id: string, data: Partial<NodeData>) => void;
+  deleteNode: (id: string) => void;
+  getNodes: () => Node<NodeData>[];
+}
+
+interface EdgesSlice {
+  edges: Edge[];
+  onEdgesChange: OnEdgesChange;
+  onConnect: OnConnect;
+  getEdges: () => Edge[];
+}
+
+interface SelectionSlice {
+  selectedNodes: Node<NodeData>[];
+  setSelectedNodes: (nodes: Node<NodeData>[]) => void;
+}
+
+interface VariablesSlice {
+  variables: Map<string, { value: string; nodeId: string }>;
+  getVariable: (name: string) => string | undefined;
+  setVariable: (name: string, value: string, nodeId: string) => void;
+  deleteVariable: (name: string) => void;
+  getAllVariables: () => string[];
+}
+
+interface CanvasSlice {
+  clearCanvas: () => void;
+}
+
+// Combine all slice types
+type FlowStore = NodesSlice & EdgesSlice & SelectionSlice & VariablesSlice & CanvasSlice;
+
+// Create slices
+const createNodesSlice = (set: any, get: any): NodesSlice => ({
   nodes: [...initialNodes],
-  edges: [...initialEdges],
-  selectedNodes: [],
-  variables: new Map(),
   onNodesChange: (changes: NodeChange[]) => {
     set({
-      nodes: applyNodeChanges(changes, get().nodes) as Node<NodeData>[],
-    });
-  },
-  onEdgesChange: (changes: EdgeChange[]) => {
-    set({
-      edges: applyEdgeChanges(changes, get().edges),
-    });
-  },
-  onConnect: (connection: Connection) => {
-    set({
-      edges: addEdge(connection, get().edges),
+      nodes: applyNodeChanges(changes, get().nodes) as Node<NodeData>[]
     });
   },
   addNode: (type: string, position: { x: number; y: number }, data?: NodeData) => {
@@ -326,7 +327,7 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       type,
       position: lastNode ? {
         x: lastNode.position.x,
-        y: lastNode.position.y + (lastNode.data.measured?.height || 300) + 100 // Add 100px padding between nodes
+        y: lastNode.position.y + (lastNode.data.measured?.height || 300) + 100
       } : position,
       data: data || createInitialNodeData(type),
     };
@@ -337,14 +338,17 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   },
   updateNode: (id: string, newData: Partial<NodeData>) => {
     set({
-      nodes: get().nodes.map((node) => {
+      nodes: get().nodes.map((node: Node<NodeData>) => {
         if (node.id === id) {
-          const updatedNode = { ...node, data: { ...node.data, ...newData } };
+          const updatedNode = { 
+            ...node, 
+            data: { ...node.data, ...newData } as NodeData
+          };
           
-          // Handle variable updates
-          if (node.type === 'variable' && 'name' in newData) {
-            const oldName = node.data.name;
-            const newName = newData.name;
+          // Handle variable updates - delegating to variables slice
+          if (node.type === 'variable' && 'name' in newData && 'name' in node.data) {
+            const oldName = node.data.name as string;
+            const newName = newData.name as string;
             if (oldName && newName && oldName !== newName) {
               const variables = new Map(get().variables);
               const value = variables.get(oldName);
@@ -363,21 +367,42 @@ export const useFlowStore = create<FlowState>((set, get) => ({
     });
   },
   deleteNode: (id: string) => {
-    const node = get().nodes.find(n => n.id === id);
-    if (node?.type === 'variable' && node.data.name) {
-      get().deleteVariable(node.data.name);
+    const node = get().nodes.find((n: Node<NodeData>) => n.id === id);
+    if (node?.type === 'variable' && 'name' in node.data && node.data.name) {
+      get().deleteVariable(node.data.name as string);
     }
 
     set({
-      nodes: get().nodes.filter((node) => node.id !== id),
-      edges: get().edges.filter(
-        (edge) => edge.source !== id && edge.target !== id
-      ),
+      nodes: get().nodes.filter((node: Node<NodeData>) => node.id !== id),
     });
   },
+  getNodes: () => get().nodes,
+});
+
+const createEdgesSlice = (set: any, get: any): EdgesSlice => ({
+  edges: [...initialEdges],
+  onEdgesChange: (changes: EdgeChange[]) => {
+    set({
+      edges: applyEdgeChanges(changes, get().edges),
+    });
+  },
+  onConnect: (connection: Connection) => {
+    set({
+      edges: addEdge(connection, get().edges),
+    });
+  },
+  getEdges: () => get().edges,
+});
+
+const createSelectionSlice = (set: any): SelectionSlice => ({
+  selectedNodes: [],
   setSelectedNodes: (nodes: Node<NodeData>[]) => {
     set({ selectedNodes: nodes });
-  },
+  }
+});
+
+const createVariablesSlice = (set: any, get: any): VariablesSlice => ({
+  variables: new Map(),
   getVariable: (name: string) => {
     return get().variables.get(name)?.value;
   },
@@ -393,7 +418,10 @@ export const useFlowStore = create<FlowState>((set, get) => ({
   },
   getAllVariables: () => {
     return Array.from(get().variables.keys());
-  },
+  }
+});
+
+const createCanvasSlice = (set: any): CanvasSlice => ({
   clearCanvas: () => {
     set({
       nodes: [],
@@ -401,7 +429,14 @@ export const useFlowStore = create<FlowState>((set, get) => ({
       selectedNodes: [],
       variables: new Map()
     });
-  },
-  getNodes: () => get().nodes,
-  getEdges: () => get().edges,
+  }
+});
+
+// Create the combined store
+export const useFlowStore = create<FlowStore>()((set, get) => ({
+  ...createNodesSlice(set, get),
+  ...createEdgesSlice(set, get),
+  ...createSelectionSlice(set),
+  ...createVariablesSlice(set, get),
+  ...createCanvasSlice(set),
 })); 

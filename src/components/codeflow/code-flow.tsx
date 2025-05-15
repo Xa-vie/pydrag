@@ -91,7 +91,7 @@ const NodeSkeleton = () => (
 );
 
 // Dynamic imports for layout components with loading states
-const Sidebar = dynamic(() => import('./sidebar'), { 
+const Sidebar = dynamic(() => import('./flow-sidebar-content'), { 
   ssr: false,
   loading: () => <SidebarSkeleton />
 });
@@ -689,9 +689,9 @@ export function CodeFlow() {
 
   return (
     <div className="flex h-screen w-full border rounded-lg overflow-hidden" suppressHydrationWarning>
-      <Suspense fallback={<SidebarSkeleton />}>
+      {/* <Suspense fallback={<SidebarSkeleton />}>
         <Sidebar />
-      </Suspense>
+      </Suspense> */}
       <div className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
