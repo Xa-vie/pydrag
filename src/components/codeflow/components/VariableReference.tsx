@@ -75,7 +75,7 @@ const VariableReference = memo(({ variableName, nodeY, inNodeId, className }: Va
             align="center"
             className="rounded-md border border-red-400 bg-white dark:bg-zinc-900 text-red-600 px-3 py-2 text-xs shadow-md min-w-[160px] max-w-[220px]"
           >
-            Variable not accessible: must be defined above where it's used.
+            Variable not accessible: must be defined above where it&apos;s used.
           </TooltipContent>
         </Tooltip>
       )}
