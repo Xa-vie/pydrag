@@ -1,6 +1,6 @@
 'use client';
 import React, { memo } from 'react';
-import { Terminal, GitBranch, Repeat, Code2, ArrowRightLeft, Play, Sparkles, ArrowUpDown, ArrowRight, HelpCircle, Wrench, PanelLeft } from 'lucide-react';
+import { Terminal, GitBranch, Repeat, Code2, ArrowRightLeft, Play, Sparkles, ArrowUpDown, ArrowRight, HelpCircle, Wrench, PanelLeft, SkipForward, RotateCw } from 'lucide-react';
 import { Keyboard, Variable as VariableIcon, Braces, AlertTriangle, MessageSquare, ListTree, KeyRound, Type, SquareCode, CircleDashed } from 'lucide-react';
 import { clsx } from 'clsx';
 import { Button } from '../ui/button';
@@ -24,13 +24,20 @@ import {
 // Available node types for the sidebar
 const nodeCategories = [
   {
+    id: 'annotations',
+    label: 'Comments',
+    description: 'Add notes to your code',
+    items: [
+      { type: 'comment', label: 'Comment', icon: MessageSquare, description: 'Write a note for yourself or others' },
+    ],
+  },
+  {
     id: 'core',
     label: 'Core Elements',
     description: 'Essential building blocks',
     items: [
       { type: 'variable', label: 'Variable', icon: VariableIcon, description: 'Create and store a value in memory' },
       { type: 'print', label: 'Print', icon: Terminal, description: 'Show a value or message on the output' },
-      { type: 'return', label: 'Return', icon: ArrowRight, description: 'Send a value back from a function' },
       { type: 'operation', label: 'Operation', icon: Wrench, description: 'Do math or logic with variables' },
     ],
   },
@@ -50,6 +57,9 @@ const nodeCategories = [
     description: 'Repeat actions multiple times',
     items: [
       { type: 'forLoop', label: 'For Loop', icon: Repeat, description: 'Repeat code for each item or a number of times' },
+      { type: 'whileLoop', label: 'While Loop', icon: Repeat, description: 'Repeat code as long as a condition is true' },
+      { type: 'break', label: 'Break', icon: SkipForward, description: 'Exit the current loop' },
+      { type: 'continue', label: 'Continue', icon: RotateCw, description: 'Skip to next iteration of the loop' },
     ],
   },
   {
@@ -59,6 +69,7 @@ const nodeCategories = [
     items: [
       { type: 'function', label: 'Define Function', icon: Code2, description: 'Create a named block of code to reuse' },
       { type: 'functionCall', label: 'Call Function', icon: Play, description: 'Run a function you have defined' },
+      { type: 'return', label: 'Return', icon: ArrowRight, description: 'Send a value back from a function' },
     ],
   },
   {
@@ -69,14 +80,6 @@ const nodeCategories = [
       { type: 'tryBlock', label: 'Try', icon: Braces, description: 'Try code that might cause an error' },
       { type: 'exceptBlock', label: 'Catch Error', icon: AlertTriangle, description: 'Respond if an error happens' },
       { type: 'finallyBlock', label: 'Finally', icon: KeyRound, description: 'Always run this code, error or not' },
-    ],
-  },
-  {
-    id: 'annotations',
-    label: 'Comments',
-    description: 'Add notes to your code',
-    items: [
-      { type: 'comment', label: 'Comment', icon: MessageSquare, description: 'Write a note for yourself or others' },
     ],
   }
 ];
@@ -98,7 +101,10 @@ const shortcuts: Record<string, string> = {
   'ifBlock': 'I',
   'elifBlock': 'E',
   'elseBlock': 'L',
-  'forLoop': 'F', 
+  'forLoop': 'F',
+  'whileLoop': 'W',
+  'break': 'B',
+  'continue': 'Q',
   'function': 'U',
   'functionCall': 'C',
   'tryBlock': 'T',
@@ -122,7 +128,7 @@ const FlowSidebarContent = () => {
 
   return (
     <>
-      <SidebarHeader className="p-0 border-b-2 border-b-border/80">
+      <SidebarHeader className="p-0 border-b border-b-border/80">
         <div className="p-3 flex items-center justify-between bg-background/90">
           {!isCollapsed && (
             <div className="flex items-center gap-2">

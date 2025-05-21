@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, Suspense } from 'react';
-import type {  ComponentType } from 'react';
+import type { ComponentType } from 'react';
 import {
   Background,
   NodeProps,
@@ -10,52 +10,38 @@ import {
   BackgroundVariant,
   useKeyPress,
   useOnSelectionChange,
+  Controls,
+  MiniMap,
+  Panel,
+  ReactFlow,
 } from '@xyflow/react';
-import { Trash2 } from 'lucide-react';
-import { 
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-const Controls = dynamic(() => import('@xyflow/react').then(mod => mod.Controls), {
-  ssr: false,
-  loading: () => <Skeleton className="w-10 h-24" />
-});
-
-const MiniMap = dynamic(() => import('@xyflow/react').then(mod => mod.MiniMap), {
-  ssr: false,
-  loading: () => <Skeleton className="w-48 h-48" />
-});
-
-const Panel = dynamic(() => import('@xyflow/react').then(mod => mod.Panel), {
-  ssr: false,
-  loading: () => <Skeleton className="w-full h-full" />
-});
-
-const ReactFlow = dynamic(() => import('@xyflow/react').then(mod => mod.ReactFlow), {
-  ssr: false,
-  loading: () => <Skeleton className="w-full h-full" />
-});
 import '@xyflow/react/dist/style.css';
 import { useFlowStore } from '@/store/use-flow-store';
-import { 
-  useRegisterActions,
-} from 'kbar';
-import type { 
-  NodeData, 
-} from '@/store/use-flow-store';
+import { useRegisterActions } from 'kbar';
+import type { NodeData } from '@/store/use-flow-store';
 import { snapToIndentation, INDENTATION_WIDTH } from './utils';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+
+// Import all nodes directly
+import IfNode from './nodes/IfNode';
+import ElifNode from './nodes/ElifNode';
+import ElseNode from './nodes/ElseNode';
+import ForLoopNode from './nodes/ForLoopNode';
+import WhileNode from './nodes/WhileNode';
+import VariableNode from './nodes/VariableNode';
+import DatabaseNode from './nodes/DatabaseNode';
+import PrintNode from './nodes/PrintNode';
+import FunctionNode from './nodes/FunctionNode';
+import CommentNode from './nodes/CommentNode';
+import FunctionCallNode from './nodes/FunctionCallNode';
+import TryBlockNode from './nodes/TryBlockNode';
+import ExceptBlockNode from './nodes/ExceptBlockNode';
+import FinallyBlockNode from './nodes/FinallyBlockNode';
+import ReturnNode from './nodes/ReturnNode';
+import OperationNode from './nodes/OperationNode';
+import BreakNode from './nodes/BreakNode';
+import ContinueNode from './nodes/ContinueNode';
 
 // Loading components
 const SidebarSkeleton = () => (
@@ -84,9 +70,9 @@ const CodePanelSkeleton = () => (
   </div>
 );
 
-const NodeSkeleton = () => (
-  <div className="w-[280px] h-[72px] rounded-lg border bg-background/95 backdrop-blur-sm p-4">
-    <Skeleton className="h-4 w-24" />
+const ClearButtonSkeleton = () => (
+  <div className="mt-2">
+    <Skeleton className="h-9 w-32" />
   </div>
 );
 
@@ -99,75 +85,10 @@ const CodePanel = dynamic(() => import('./code-panel'), {
   ssr: false,
   loading: () => <CodePanelSkeleton />
 });
-
-// Dynamic imports for node components with loading states
-const IfNode = dynamic(() => import('./nodes/IfNode'), { 
+const ClearCanvasButton = dynamic(() => import('./clear-canvas-button'), { 
   ssr: false,
-  loading: () => <NodeSkeleton />
+  loading: () => <ClearButtonSkeleton />
 });
-const ElifNode = dynamic(() => import('./nodes/ElifNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const ElseNode = dynamic(() => import('./nodes/ElseNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const VariableNode = dynamic(() => import('./nodes/VariableNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const ForLoopNode = dynamic(() => import('./nodes/ForLoopNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const DatabaseNode = dynamic(() => import('./nodes/DatabaseNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const FunctionCallNode = dynamic(() => import('./nodes/FunctionCallNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const PrintNode = dynamic(() => import('./nodes/PrintNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const TryBlockNode = dynamic(() => import('./nodes/TryBlockNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const ExceptBlockNode = dynamic(() => import('./nodes/ExceptBlockNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const FinallyBlockNode = dynamic(() => import('./nodes/FinallyBlockNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const FunctionNode = dynamic(() => import('./nodes/FunctionNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const CommentNode = dynamic(() => import('./nodes/CommentNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const ReturnNode = dynamic(() => import('./nodes/ReturnNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-const OperationNode = dynamic(() => import('./nodes/OperationNode'), { 
-  ssr: false,
-  loading: () => <NodeSkeleton />
-});
-
-// Custom props type for node components
-interface NodeComponentProps<T extends NodeData> {
-  id: string;
-  data: T;
-  selected?: boolean;
-}
 
 // Node types configuration
 const nodeTypes = {
@@ -175,6 +96,7 @@ const nodeTypes = {
   elifBlock: ElifNode as unknown as ComponentType<NodeProps>,
   elseBlock: ElseNode as unknown as ComponentType<NodeProps>,
   forLoop: ForLoopNode as unknown as ComponentType<NodeProps>,
+  whileLoop: WhileNode as unknown as ComponentType<NodeProps>,
   variable: VariableNode as unknown as ComponentType<NodeProps>,
   database: DatabaseNode as unknown as ComponentType<NodeProps>,
   print: PrintNode as unknown as ComponentType<NodeProps>,
@@ -186,11 +108,376 @@ const nodeTypes = {
   finallyBlock: FinallyBlockNode as unknown as ComponentType<NodeProps>,
   return: ReturnNode as unknown as ComponentType<NodeProps>,
   operation: OperationNode as unknown as ComponentType<NodeProps>,
+  break: BreakNode as unknown as ComponentType<NodeProps>,
+  continue: ContinueNode as unknown as ComponentType<NodeProps>,
 };
+
+// Move KBar actions outside component
+const flowActions = [
+  {
+    id: 'add-if-node',
+    name: 'Add If Condition',
+    shortcut: ['i'],
+    keywords: 'condition branch flow control if else elif',
+    section: 'Control Flow',
+    subtitle: 'Create conditional branches in your code',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('ifBlock', position);
+    },
+  },
+  {
+    id: 'add-elif-node',
+    name: 'Add Elif Condition',
+    shortcut: ['e'],
+    keywords: 'condition branch flow control elif else if',
+    section: 'Control Flow',
+    subtitle: 'Create elif conditional branches',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('elifBlock', position);
+    },
+  },
+  {
+    id: 'add-else-node',
+    name: 'Add Else Block',
+    shortcut: ['l'],
+    keywords: 'condition branch flow control else',
+    section: 'Control Flow',
+    subtitle: 'Create else fallback branch',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('elseBlock', position);
+    },
+  },
+  {
+    id: 'add-for-loop',
+    name: 'Add For Loop',
+    shortcut: ['f'],
+    keywords: 'loop iterate repeat for range sequence',
+    section: 'Control Flow',
+    subtitle: 'Create loops and iterations',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('forLoop', position);
+    },
+  },
+  {
+    id: 'add-while-loop',
+    name: 'Add While Loop',
+    shortcut: ['w'],
+    keywords: 'loop iterate repeat while condition',
+    section: 'Control Flow',
+    subtitle: 'Create loops that run while a condition is true',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('whileLoop', position);
+    },
+  },
+  {
+    id: 'add-break',
+    name: 'Add Break',
+    shortcut: ['b'],
+    keywords: 'break exit loop stop',
+    section: 'Control Flow',
+    subtitle: 'Exit the current loop',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('break', position);
+    },
+  },
+  {
+    id: 'add-continue',
+    name: 'Add Continue',
+    shortcut: ['q'],
+    keywords: 'continue next iteration loop skip',
+    section: 'Control Flow',
+    subtitle: 'Skip to the next iteration of the loop',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('continue', position);
+    },
+  },
+  {
+    id: 'add-function',
+    name: 'Add Function Definition',
+    shortcut: ['u'],
+    keywords: 'function define method subroutine procedure',
+    section: 'Control Flow',
+    subtitle: 'Define reusable code blocks',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('function', position);
+    },
+  },
+  {
+    id: 'add-function-call',
+    name: 'Add Function Call',
+    shortcut: ['c'],
+    keywords: 'call invoke execute function method',
+    section: 'Control Flow',
+    subtitle: 'Call a defined function',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('functionCall', position);
+    },
+  },
+  {
+    id: 'add-variable',
+    name: 'Add Variable',
+    shortcut: ['v'],
+    keywords: 'var value store data variable assign',
+    section: 'Data',
+    subtitle: 'Store and manipulate data',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('variable', position);
+    },
+  },
+  {
+    id: 'add-print',
+    name: 'Add Print',
+    shortcut: ['p'],
+    keywords: 'print output log console display',
+    section: 'Data',
+    subtitle: 'Output text or variables',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('print', position);
+    },
+  },
+  {
+    id: 'add-database',
+    name: 'Add Database Query',
+    shortcut: ['d'],
+    keywords: 'sql query database storage db',
+    section: 'Data',
+    subtitle: 'Execute SQL queries',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('database', position);
+    },
+  },
+  {
+    id: 'add-comment',
+    name: 'Add Comment',
+    shortcut: ['a'],
+    keywords: 'comment annotation note documentation',
+    section: 'Documentation',
+    subtitle: 'Add notes and documentation',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('comment', position);
+    },
+  },
+  {
+    id: 'add-try-block',
+    name: 'Add Try Block',
+    shortcut: ['t'],
+    keywords: 'try except error exception handling',
+    section: 'Error Handling',
+    subtitle: 'Handle potential errors',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('tryBlock', position);
+    },
+  },
+  {
+    id: 'add-except-block',
+    name: 'Add Except Block',
+    shortcut: ['x'],
+    keywords: 'except catch error exception handling',
+    section: 'Error Handling',
+    subtitle: 'Catch specific exceptions',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('exceptBlock', position);
+    },
+  },
+  {
+    id: 'add-finally-block',
+    name: 'Add Finally Block',
+    shortcut: ['y'],
+    keywords: 'finally cleanup error exception handling',
+    section: 'Error Handling',
+    subtitle: 'Execute cleanup code',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('finallyBlock', position);
+    },
+  },
+  {
+    id: 'add-operation',
+    name: 'Add Operation',
+    shortcut: ['o'],
+    keywords: 'operation string list dict function method',
+    section: 'Data',
+    subtitle: 'Perform operations on strings, lists, or dictionaries',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('operation', position);
+    },
+  },
+  {
+    id: 'add-return-node',
+    name: 'Add Return',
+    shortcut: ['r'],
+    keywords: 'return value function result exit',
+    section: 'Control Flow',
+    subtitle: 'Return a value from a function',
+    perform: () => {
+      const nodes = useFlowStore.getState().nodes;
+      const lastNode = nodes[nodes.length - 1];
+      const position = lastNode ? {
+        x: lastNode.position.x,
+        y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150
+      } : {
+        x: 100,
+        y: 100
+      };
+      useFlowStore.getState().addNode('return', position);
+    },
+  },
+];
 
 export function CodeFlow() {
   const [reactFlowInstance, setReactFlowInstance] = useState<ReactFlowInstance | null>(null);
-  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   const {
     nodes,
@@ -240,16 +527,13 @@ export function CodeFlow() {
         return;
       }
 
-      // Get the exact drop position
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
 
-      // Snap to indentation grid
       position.x = snapToIndentation(position.x);
 
-      // Initialize node data based on type
       let initialData: NodeData;
       switch (type) {
         case 'operation':
@@ -325,6 +609,13 @@ export function CodeFlow() {
             condition: ''
           };
           break;
+        case 'whileLoop':
+          initialData = {
+            type: 'whileLoop',
+            label: 'While Loop',
+            condition: ''
+          };
+          break;
         case 'variable':
           initialData = {
             type: 'variable',
@@ -365,6 +656,18 @@ export function CodeFlow() {
             returnValue: ''
           };
           break;
+        case 'break':
+          initialData = {
+            type: 'break',
+            label: 'Break'
+          };
+          break;
+        case 'continue':
+          initialData = {
+            type: 'continue',
+            label: 'Continue'
+          };
+          break;
         default:
           initialData = {
             type: 'print',
@@ -375,324 +678,13 @@ export function CodeFlow() {
 
       addNode(type, position, initialData);
     },
-    [addNode, reactFlowInstance]
+    [reactFlowInstance, addNode]
   );
 
-  // Add KBar actions for each node type
-  useRegisterActions([
-    {
-      id: 'add-if-node',
-      name: 'Add If Condition',
-      shortcut: ['i'],
-      keywords: 'condition branch flow control if else elif',
-      section: 'Control Flow',
-      subtitle: 'Create conditional branches in your code',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('ifBlock', position);
-      },
-    },
-    {
-      id: 'add-elif-node',
-      name: 'Add Elif Condition',
-      shortcut: ['e'],
-      keywords: 'condition branch flow control elif else if',
-      section: 'Control Flow',
-      subtitle: 'Create elif conditional branches',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('elifBlock', position);
-      },
-    },
-    {
-      id: 'add-else-node',
-      name: 'Add Else Block',
-      shortcut: ['l'],
-      keywords: 'condition branch flow control else',
-      section: 'Control Flow',
-      subtitle: 'Create else fallback branch',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('elseBlock', position);
-      },
-    },
-    {
-      id: 'add-for-loop',
-      name: 'Add For Loop',
-      shortcut: ['f'],
-      keywords: 'loop iterate repeat for range sequence',
-      section: 'Control Flow',
-      subtitle: 'Create loops and iterations',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('forLoop', position);
-      },
-    },
-    {
-      id: 'add-function',
-      name: 'Add Function Definition',
-      shortcut: ['u'],
-      keywords: 'function define method subroutine procedure',
-      section: 'Control Flow',
-      subtitle: 'Define reusable code blocks',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('function', position);
-      },
-    },
-    {
-      id: 'add-function-call',
-      name: 'Add Function Call',
-      shortcut: ['c'],
-      keywords: 'call invoke execute function method',
-      section: 'Control Flow',
-      subtitle: 'Call a defined function',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('functionCall', position);
-      },
-    },
-    {
-      id: 'add-variable',
-      name: 'Add Variable',
-      shortcut: ['v'],
-      keywords: 'var value store data variable assign',
-      section: 'Data',
-      subtitle: 'Store and manipulate data',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('variable', position);
-      },
-    },
-    {
-      id: 'add-print',
-      name: 'Add Print',
-      shortcut: ['p'],
-      keywords: 'print output log console display',
-      section: 'Data',
-      subtitle: 'Output text or variables',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('print', position);
-      },
-    },
-    {
-      id: 'add-database',
-      name: 'Add Database Query',
-      shortcut: ['d'],
-      keywords: 'sql query database storage db',
-      section: 'Data',
-      subtitle: 'Execute SQL queries',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('database', position);
-      },
-    },
-    {
-      id: 'add-comment',
-      name: 'Add Comment',
-      shortcut: ['a'],
-      keywords: 'comment annotation note documentation',
-      section: 'Documentation',
-      subtitle: 'Add notes and documentation',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('comment', position);
-      },
-    },
-    {
-      id: 'add-try-block',
-      name: 'Add Try Block',
-      shortcut: ['t'],
-      keywords: 'try except error exception handling',
-      section: 'Error Handling',
-      subtitle: 'Handle potential errors',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('tryBlock', position);
-      },
-    },
-    {
-      id: 'add-except-block',
-      name: 'Add Except Block',
-      shortcut: ['x'],
-      keywords: 'except catch error exception handling',
-      section: 'Error Handling',
-      subtitle: 'Catch specific exceptions',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('exceptBlock', position);
-      },
-    },
-    {
-      id: 'add-finally-block',
-      name: 'Add Finally Block',
-      shortcut: ['y'],
-      keywords: 'finally cleanup error exception handling',
-      section: 'Error Handling',
-      subtitle: 'Execute cleanup code',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('finallyBlock', position);
-      },
-    },
-    {
-      id: 'add-operation',
-      name: 'Add Operation',
-      shortcut: ['o'],
-      keywords: 'operation string list dict function method',
-      section: 'Data',
-      subtitle: 'Perform operations on strings, lists, or dictionaries',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('operation', position);
-      },
-    },
-    {
-      id: 'add-return-node',
-      name: 'Add Return',
-      shortcut: ['r'],
-      keywords: 'return value function result exit',
-      section: 'Control Flow',
-      subtitle: 'Return a value from a function',
-      perform: () => {
-        const nodes = useFlowStore.getState().nodes;
-        const lastNode = nodes[nodes.length - 1];
-        const position = lastNode ? {
-          x: lastNode.position.x,
-          y: lastNode.position.y + (lastNode.data.measured?.height || 72) + 150 // Add 150px padding between nodes
-        } : {
-          x: (reactFlowInstance?.getViewport().x || 0) + 100,
-          y: (reactFlowInstance?.getViewport().y || 0) + 100
-        };
-        addNode('return', position);
-      },
-    },
-  ], [reactFlowInstance, addNode]);
-
-  const handleClearCanvas = useCallback(() => {
-    clearCanvas();
-    setIsClearDialogOpen(false);
-  }, [clearCanvas]);
+  // Update KBar registration to use external actions
+  useRegisterActions(flowActions, [reactFlowInstance, addNode]);
 
   return (
-    <div className="flex h-screen w-full border rounded-lg overflow-hidden" suppressHydrationWarning>
-      {/* <Suspense fallback={<SidebarSkeleton />}>
-        <Sidebar />
-      </Suspense> */}
-      <div className="flex-1 relative">
         <ReactFlow
           nodes={nodes}
           edges={edges}
@@ -701,6 +693,7 @@ export function CodeFlow() {
           nodeTypes={nodeTypes}
           onConnect={onConnect}
           onDrop={onDrop}
+      nodesFocusable={false}
           onDragOver={onDragOver}
           onInit={setReactFlowInstance}
           snapToGrid={true}
@@ -708,22 +701,17 @@ export function CodeFlow() {
           colorMode={'dark'} 
           defaultViewport={{ x: 0, y: 0, zoom: 0.8 }}
           fitView={false}
-          className="bg-background/90 backdrop-blur-[2px]"
+      className="bg-background/95"
           panOnScroll
           defaultEdgeOptions={{
             style: { strokeWidth: 2, stroke: 'rgba(var(--primary), 0.8)' },
             type: 'smoothstep',
-            markerEnd: {
-              type: 'arrow',
-              width: 20,
-              height: 20,
-              color: 'rgba(var(--primary), 0.8)',
-            },
+            markerEnd: 'arrow',
           }}
         >
           <Background variant={BackgroundVariant.Dots} gap={16} size={2} color="#888" />
-          <Controls className="bg-background/95 backdrop-blur-sm border-2 rounded-md shadow-md" />
-          <MiniMap className="border-2 bg-background/95 backdrop-blur-sm rounded-md shadow-md" />
+      <Controls className="bg-background/95 border-2 rounded-md shadow-md" />
+      <MiniMap className="border-2 bg-background/95 rounded-md shadow-md" />
           <Panel position="top-right">
             <Suspense fallback={<CodePanelSkeleton />}>
               <CodePanel />
@@ -731,46 +719,10 @@ export function CodeFlow() {
           </Panel>
           
           {/* Clear Canvas Button */}
-          <Panel position="top-left" className="mt-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <AlertDialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-                    <AlertDialogTrigger asChild>
-                      <Button 
-                        variant="destructive" 
-                        size="sm" 
-                        className="bg-destructive text-destructive-foreground font-medium backdrop-blur-sm rounded-md shadow-lg border-2 border-destructive/30 flex items-center gap-2 hover:bg-destructive/90 transition-colors"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span>Clear Canvas</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent className="border-2">
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Clear Canvas</AlertDialogTitle>
-                        <AlertDialogDescription className="text-foreground/80">
-                          Are you sure you want to clear the canvas? This will remove all nodes and edges. This action cannot be undone.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel className="border-2">Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleClearCanvas} className="bg-destructive text-destructive-foreground font-medium hover:bg-destructive/90 border-2 border-destructive/30">
-                          Clear Canvas
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="border-2">
-                  <p className="font-medium">Clear all nodes and edges from the canvas</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </Panel>
+          <Suspense fallback={<ClearButtonSkeleton />}>
+            <ClearCanvasButton clearCanvas={clearCanvas} />
+          </Suspense>
         </ReactFlow>
-      </div>
-    </div>
   );
 }
 

@@ -25,6 +25,19 @@ export interface ForLoopNodeData extends BaseNodeData {
   condition?: string;
 }
 
+export interface WhileNodeData extends BaseNodeData {
+  type: 'whileLoop';
+  condition?: string;
+}
+
+export interface BreakNodeData extends BaseNodeData {
+  type: 'break';
+}
+
+export interface ContinueNodeData extends BaseNodeData {
+  type: 'continue';
+}
+
 export interface VariableNodeData extends BaseNodeData {
   type: 'variable';
   name?: string;
@@ -90,12 +103,12 @@ export interface ReturnNodeData extends BaseNodeData {
 
 export interface OperationNodeData extends BaseNodeData {
   type: 'operation';
-  dataType?: 'string' | 'list' | 'dict';
-  targetVariable?: string;
+  sourceVariable?: string;
   operation?: string;
-  parameters: string[];
-  resultVariable?: string;
-  generateComment: boolean;
+  operationValue?: string;
+  createNewVariable?: boolean;
+  targetVariable?: string;
+  generateComment?: boolean;
 }
 
 export interface NodeComponentProps<T extends StoreBaseNodeData> {

@@ -12,6 +12,8 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from '@xyflow/react';
+import { createCodeGenerationSlice } from './code-generation-slice';
+import { createPagesSlice } from './pages-slice';
 
 // Node data types
 export interface BaseNodeData {
@@ -110,12 +112,25 @@ export interface ReturnNodeData extends BaseNodeData {
 
 export interface OperationNodeData extends BaseNodeData {
   type: 'operation';
-  dataType?: 'string' | 'list' | 'dict';
-  targetVariable?: string;
+  sourceVariable?: string;
   operation?: string;
-  parameters: string[];
-  resultVariable?: string;
-  generateComment: boolean;
+  operationValue?: string;
+  createNewVariable?: boolean;
+  targetVariable?: string;
+  generateComment?: boolean;
+}
+
+export interface WhileNodeData extends BaseNodeData {
+  type: 'whileLoop';
+  condition: string;
+}
+
+export interface BreakNodeData extends BaseNodeData {
+  type: 'break';
+}
+
+export interface ContinueNodeData extends BaseNodeData {
+  type: 'continue';
 }
 
 export type NodeData = 
@@ -133,7 +148,10 @@ export type NodeData =
   | ExceptNodeData
   | FinallyNodeData
   | ReturnNodeData
-  | OperationNodeData;
+  | OperationNodeData
+  | WhileNodeData
+  | BreakNodeData
+  | ContinueNodeData;
 
 // Helper function to create initial node data
 const createInitialNodeData = (type: string): NodeData => {
@@ -168,6 +186,14 @@ const createInitialNodeData = (type: string): NodeData => {
         ...baseData,
         type: 'elseBlock' as const,
         label: 'Else',
+        generateComment: false
+      };
+    case 'whileLoop':
+      return {
+        ...baseData,
+        type: 'whileLoop' as const,
+        label: 'While Loop',
+        condition: '',
         generateComment: false
       };
     case 'forLoop':
@@ -220,11 +246,11 @@ const createInitialNodeData = (type: string): NodeData => {
         ...baseData,
         type: 'operation' as const,
         label: 'Operation',
-        dataType: undefined,
-        targetVariable: undefined,
+        sourceVariable: '',
         operation: '',
-        parameters: [],
-        resultVariable: '',
+        operationValue: '',
+        createNewVariable: false,
+        targetVariable: '',
         generateComment: false
       };
     case 'return':
@@ -235,12 +261,32 @@ const createInitialNodeData = (type: string): NodeData => {
         returnValue: ''
       };
     case 'print':
-    default:
       return {
         ...baseData,
         type: 'print' as const,
         label: 'Print',
         message: '',
+        generateComment: false
+      };
+    case 'break':
+      return {
+        ...baseData,
+        type: 'break' as const,
+        label: 'Break',
+        generateComment: false
+      };
+    case 'continue':
+      return {
+        ...baseData,
+        type: 'continue' as const,
+        label: 'Continue',
+        generateComment: false
+      };
+    default:
+      return {
+        ...baseData,
+        type: type as const,
+        label: type.charAt(0).toUpperCase() + type.slice(1),
         generateComment: false
       };
   }
@@ -308,8 +354,18 @@ interface CanvasSlice {
   clearCanvas: () => void;
 }
 
-// Combine all slice types
-type FlowStore = NodesSlice & EdgesSlice & SelectionSlice & VariablesSlice & CanvasSlice;
+// Import code generation slice from separate file
+// The CodeGenerationSlice interface is imported from the separate file
+
+// Combine all slice types including CodeGenerationSlice
+type FlowStore = 
+  & NodesSlice 
+  & EdgesSlice 
+  & SelectionSlice 
+  & VariablesSlice 
+  & CanvasSlice 
+  & ReturnType<typeof createCodeGenerationSlice>
+  & ReturnType<typeof createPagesSlice>;
 
 // Create slices
 const createNodesSlice = (set: any, get: any): NodesSlice => ({
@@ -407,14 +463,16 @@ const createVariablesSlice = (set: any, get: any): VariablesSlice => ({
     return get().variables.get(name)?.value;
   },
   setVariable: (name: string, value: string, nodeId: string) => {
-    const variables = new Map(get().variables);
+    const oldVariables = get().variables;
+    const variables = new Map(oldVariables);
     variables.set(name, { value, nodeId });
-    set({ variables });
+    set({ variables: new Map(variables) });
   },
   deleteVariable: (name: string) => {
-    const variables = new Map(get().variables);
+    const oldVariables = get().variables;
+    const variables = new Map(oldVariables);
     variables.delete(name);
-    set({ variables });
+    set({ variables: new Map(variables) });
   },
   getAllVariables: () => {
     return Array.from(get().variables.keys());
@@ -439,4 +497,6 @@ export const useFlowStore = create<FlowStore>()((set, get) => ({
   ...createSelectionSlice(set),
   ...createVariablesSlice(set, get),
   ...createCanvasSlice(set),
+  ...createCodeGenerationSlice(set, get),
+  ...createPagesSlice(set, get),
 })); 

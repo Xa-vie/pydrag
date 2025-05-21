@@ -6,19 +6,10 @@ import {
   SidebarInset,
   SidebarTrigger
 } from '@/components/ui/sidebar';
-import { Separator } from '@/components/ui/separator';
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator
-} from '@/components/ui/breadcrumb';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { CodeFlow } from '@/components/codeflow/code-flow';
-
+import FlowTabs from '@/components/flow-tabs';
 export const metadata: Metadata = {
   title: 'Py-Drag',
   description: 'Py-Drag is a tool that allows you to create and edit Python code using a drag and drop interface.'
@@ -49,18 +40,21 @@ export default async function DashboardLayout({
 
   return (
 
-    <SidebarProvider defaultOpen={defaultOpen}>
+    <SidebarProvider defaultOpen={defaultOpen} suppressHydrationWarning>
       <AppSidebar />
       <SidebarInset>
-        {/* <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
-
-        </header> */}
-        <main className="flex-1">
-          <KBar>
-            {children}
-          </KBar>
-
-        </main>
+        <div className="flex flex-col h-full min-h-0">
+      {/* Header */}
+          {/* <header className="h-14 flex-shrink-0 bg-background z-10"> */}
+            <FlowTabs />
+          {/* </header> */}
+          {/* Main Content */}
+          <main className="flex-1 min-h-0 overflow-auto">
+            <KBar>
+              {children}
+            </KBar>
+          </main>
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

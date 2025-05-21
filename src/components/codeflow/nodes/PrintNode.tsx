@@ -6,6 +6,7 @@ import { PrintNodeData, NodeComponentProps } from './types';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
 import { findParentFunctionNodeByPosition } from '../utils';
+import VariableReference from '../components/VariableReference';
 
 const PrintNode = memo(({ data, id, selected }: NodeComponentProps<PrintNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
@@ -13,11 +14,17 @@ const PrintNode = memo(({ data, id, selected }: NodeComponentProps<PrintNodeData
   const getVariable = useFlowStore(state => state.getVariable);
   const getNodes = useFlowStore(state => state.getNodes);
   const getEdges = useFlowStore(state => state.getEdges);
+  // Subscribe to variables to automatically update when variables change
+  const variables = useFlowStore(state => state.variables);
   const nodes = getNodes();
   const edges = getEdges();
   const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
   const availableVariables = getAllVariables();
   const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
+
+  // Get node position for scope checking
+  const currentNode = nodes.find(n => n.id === id);
+  const nodeY = currentNode?.position.y || 0;
 
   const handleMessageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newData: PrintNodeData = {
@@ -101,6 +108,9 @@ const PrintNode = memo(({ data, id, selected }: NodeComponentProps<PrintNodeData
               <div className={nodeStyles.suggestions.list}>
                 {availableVariables.map(varName => {
                   const value = getVariable(varName);
+                  const currentNode = nodes.find(n => n.id === id);
+                  const nodeY = currentNode?.position.y || 0;
+                  
                   return (
                     <button
                       key={varName}
@@ -108,7 +118,11 @@ const PrintNode = memo(({ data, id, selected }: NodeComponentProps<PrintNodeData
                       className={nodeStyles.suggestions.item}
                       title={`Current value: ${value}`}
                     >
-                      {varName}
+                      <VariableReference 
+                        variableName={varName}
+                        nodeY={nodeY}
+                        inNodeId={id}
+                      />
                     </button>
                   );
                 })}

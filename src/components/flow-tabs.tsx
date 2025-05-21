@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, memo } from 'react';
 import { 
   Plus, X, Edit2, MoreHorizontal, FileCode, CheckCircle2, Hash, FileCode2, Copy, 
-  Download, Upload, Trash2, Settings, ExternalLink 
+  Download, Upload, Trash2, Settings, ExternalLink, Brain 
 } from 'lucide-react';
 import { useFlowStore } from '@/store/use-flow-store';
 import {
@@ -38,12 +38,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import PracticeChallenge from '@/components/practice-challenge';
 
 function FlowTabs() {
   const [isNewPageDialogOpen, setIsNewPageDialogOpen] = useState(false);
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  const [isPracticeChallengeOpen, setIsPracticeChallengeOpen] = useState(false);
   const [newPageName, setNewPageName] = useState('');
   const [editingPageId, setEditingPageId] = useState<string | null>(null);
   const [editingPageName, setEditingPageName] = useState('');
@@ -54,7 +56,17 @@ function FlowTabs() {
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 });
   const tabsRef = useRef<Map<string, HTMLButtonElement>>(new Map());
 
-  const { pages, currentPageId, createPage, deletePage, renamePage, setCurrentPage, getNodes, getEdges, setNodes, setEdges } = useFlowStore();
+  // Select only the state and actions needed for tabs
+  const pages = useFlowStore(state => state.pages);
+  const currentPageId = useFlowStore(state => state.currentPageId);
+  const createPage = useFlowStore(state => state.createPage);
+  const deletePage = useFlowStore(state => state.deletePage);
+  const renamePage = useFlowStore(state => state.renamePage);
+  const setCurrentPage = useFlowStore(state => state.setCurrentPage);
+  const getNodes = useFlowStore(state => state.getNodes);
+  const getEdges = useFlowStore(state => state.getEdges);
+  const setNodes = useFlowStore(state => state.setNodes);
+  const setEdges = useFlowStore(state => state.setEdges);
 
   useEffect(() => {
     updateIndicator();
@@ -222,7 +234,7 @@ if __name__ == "__main__":
       {/* Remove subtle background gradient for cleaner look */}
       
       <Tabs value={currentPageId || ''} onValueChange={setCurrentPage} className="w-full">
-        <div className="relative flex items-center px-3 py-2 bg-background border-b-2 overflow-x-auto no-scrollbar z-10">
+        <div className="relative flex items-center px-3 py-2 bg-background border-b overflow-x-auto no-scrollbar z-10">
           <TabsList className="h-auto p-0 bg-transparent space-x-2">
             {pages.map((page, index) => {
               const isActive = currentPageId === page.id;
@@ -661,6 +673,27 @@ if __name__ == "__main__":
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          {/* Practice Challenge Button */}
+          <Dialog open={isPracticeChallengeOpen} onOpenChange={setIsPracticeChallengeOpen}>
+            <DialogTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className={cn(
+                  "ml-2 h-8 text-xs gap-1 rounded-md",
+                  "bg-purple-500/10 hover:bg-purple-500/15 transition-colors",
+                  "text-purple-500 border-purple-500/30"
+                )}
+              >
+                <Brain className="h-3.5 w-3.5" />
+                <span>Challenges</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[500px] p-0 border border-border/40 shadow-lg rounded-lg bg-background/95 backdrop-blur-lg">
+              <PracticeChallenge />
+            </DialogContent>
+          </Dialog>
 
           {/* Share Dialog */}
           <Dialog open={isShareDialogOpen} onOpenChange={setIsShareDialogOpen}>

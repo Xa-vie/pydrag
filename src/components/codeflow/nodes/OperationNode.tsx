@@ -1,546 +1,598 @@
-import { memo, useState, useMemo, useEffect } from 'react';
+import { memo, useState, useMemo, useRef } from 'react';
+import { Calculator, Plus, X, Globe } from 'lucide-react';
 import { useFlowStore } from '@/store/use-flow-store';
 import NodeWrapper from './NodeWrapper';
 import { OperationNodeData, NodeComponentProps } from './types';
+import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
 import clsx from 'clsx';
 import { nodeStyles } from './nodeStyles';
-import { Wrench, ChevronDown, Info, AlertCircle, Search } from 'lucide-react';
-import { findParentFunctionNodeByPosition } from '../utils';
+import VariableReference from '../components/VariableReference';
+
+// Tooltip helper
+const operationExamples: Record<string, string> = {
+  '+': 'a + b (Add/Concatenate)',
+  '-': 'a - b (Subtract)',
+  '*': 'a * b (Multiply/Repeat)',
+  '/': 'a / b (Divide)',
+  '%': 'a % b (Modulo)',
+  '**': 'a ** b (Power)',
+  '==': 'a == b (Equal)',
+  '!=': 'a != b (Not Equal)',
+  '<': 'a < b',
+  '>': 'a > b',
+  '<=': 'a <= b',
+  '>=': 'a >= b',
+  'upper()': 'str.upper()',
+  'lower()': 'str.lower()',
+  'strip()': 'str.strip()',
+  'len()': 'len(x)',
+  'append': 'list.append(item)',
+  'sorted()': 'sorted(list)',
+  'reversed()': 'reversed(list)',
+  'get': 'dict.get(key, None)',
+  'update': 'dict.update(other)',
+  'keys()': 'dict.keys()',
+  'values()': 'dict.values()',
+  'and': 'a and b',
+  'or': 'a or b',
+  'not': 'not a',
+  'int()': 'int(x)',
+  'str()': 'str(x)',
+  'float()': 'float(x)',
+  'min()': 'min(list)',
+  'max()': 'max(list)',
+  'sum()': 'sum(list)',
+};
+
+const operationResultType: Record<string, string> = {
+  '+': 'Same as operands',
+  '-': 'number',
+  '*': 'number or string/list',
+  '/': 'float',
+  '%': 'number',
+  '**': 'number',
+  '==': 'boolean',
+  '!=': 'boolean',
+  '<': 'boolean',
+  '>': 'boolean',
+  '<=': 'boolean',
+  '>=': 'boolean',
+  'upper()': 'string',
+  'lower()': 'string',
+  'strip()': 'string',
+  'len()': 'int',
+  'append': 'list (in-place)',
+  'sorted()': 'list',
+  'reversed()': 'iterator',
+  'get': 'value',
+  'update': 'dict (in-place)',
+  'keys()': 'list',
+  'values()': 'list',
+  'and': 'boolean',
+  'or': 'boolean',
+  'not': 'boolean',
+  'int()': 'int',
+  'str()': 'string',
+  'float()': 'float',
+  'min()': 'number',
+  'max()': 'number',
+  'sum()': 'number',
+};
+
+// Type definitions
+interface VariableInfo {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'list' | 'dict' | 'unknown';
+  value: string;
+}
 
 const OperationNode = memo(({ data, id, selected }: NodeComponentProps<OperationNodeData>) => {
   const updateNode = useFlowStore(state => state.updateNode);
   const getAllVariables = useFlowStore(state => state.getAllVariables);
   const getVariable = useFlowStore(state => state.getVariable);
-  const getNodes = useFlowStore(state => state.getNodes);
-  const getEdges = useFlowStore(state => state.getEdges);
-  const [resultVariable, setResultVariable] = useState(data.resultVariable || '');
-  const [operationError, setOperationError] = useState<string | null>(null);
-  const [showParameterSuggestions, setShowParameterSuggestions] = useState<number | null>(null);
+  const setVariable = useFlowStore(state => state.setVariable);
+  const variables = useFlowStore(state => state.variables);
+  // Get nodes for position information
+  const nodes = useFlowStore(state => state.getNodes());
+  const [variableNameError, setVariableNameError] = useState<string | null>(null);
+  const [showCreated, setShowCreated] = useState(false);
+  const createdTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [version, setVersion] = useState(0);
+  
+  // Get current node position for scope checking
+  const currentNode = nodes.find(n => n.id === id);
+  const nodeY = currentNode?.position.y || 0;
 
-  const nodes = getNodes();
-  const edges = getEdges();
-  const parentFunctionNode = findParentFunctionNodeByPosition(id, nodes);
-  const availableParameters: string[] = Array.isArray(parentFunctionNode?.data?.parameters) ? parentFunctionNode.data.parameters : [];
-
-  // Get all available variables with their types
-  const availableVariables = useMemo(() => {
+  // Get all available variables with type information from the store
+  const variablesWithTypes = useMemo(() => {
     const vars = getAllVariables();
     return vars.map(varName => {
       const value = getVariable(varName);
-      let type = 'unknown';
+      let type: VariableInfo['type'] = 'unknown';
       
       if (value !== undefined) {
         try {
+          // First try to parse the value
           const parsedValue = JSON.parse(value);
+          
+          // Infer the type
           if (typeof parsedValue === 'string') type = 'string';
-          else if (Array.isArray(parsedValue)) type = 'list';
-          else if (typeof parsedValue === 'object' && parsedValue !== null) type = 'dict';
           else if (typeof parsedValue === 'number') type = 'number';
           else if (typeof parsedValue === 'boolean') type = 'boolean';
+          else if (Array.isArray(parsedValue)) type = 'list';
+          else if (typeof parsedValue === 'object' && parsedValue !== null) type = 'dict';
         } catch {
-          // If parsing fails, treat as string
-          type = 'string';
+          // For unparsable strings like "var1 + var2", assume string format
+          if (value.includes('"') || !value.match(/[+\-*/%<>=]/)) {
+            type = 'string';
+          } else if (value.includes('[') && value.includes(']')) {
+            type = 'list';
+          } else if (value.includes('{') && value.includes('}')) {
+            type = 'dict';
+          } else if (value === 'True' || value === 'False') {
+            type = 'boolean';
+          } else if (!isNaN(Number(value))) {
+            type = 'number';
+          } else {
+            type = 'string'; // default to string if we can't determine
+          }
         }
       }
       
-      return { name: varName, type, value };
+      return { name: varName, type, value: value || '' };
     });
-  }, [getAllVariables, getVariable]);
+  }, [getAllVariables, getVariable, variables]); // Re-run when variables change
 
-  // Filter variables based on data type compatibility
-  const filteredVariables = useMemo(() => {
-    return availableVariables.filter(v => 
-      !data.dataType || v.type === data.dataType
-    );
-  }, [availableVariables, data.dataType]);
+  // List of variables created by this node
+  const createdVariables = useMemo(() => {
+    // Use the variable store to find variables with this node's id
+    const allVars = getAllVariables();
+    return allVars
+      .map(name => ({
+        name,
+        value: getVariable(name),
+        nodeId: (variables as Map<string, { value: string; nodeId: string }>).get(name)?.nodeId,
+      }))
+      .filter(v => v.nodeId === id);
+  }, [getAllVariables, getVariable, id, version, variables]); // Re-run when variables or version changes
 
-  // Operation types for each data type
-  const STRING_OPERATIONS = [
-    { value: 'upper', label: 'Uppercase', description: 'Convert string to uppercase' },
-    { value: 'lower', label: 'Lowercase', description: 'Convert string to lowercase' },
-    { value: 'capitalize', label: 'Capitalize', description: 'Capitalize first character' },
-    { value: 'strip', label: 'Strip Whitespace', description: 'Remove leading/trailing whitespace' },
-    { value: 'replace', label: 'Replace', description: 'Replace substring with another' },
-    { value: 'split', label: 'Split', description: 'Split string into list by delimiter' },
-    { value: 'join', label: 'Join', description: 'Join list elements with separator' },
-    { value: 'len', label: 'Length', description: 'Get string length' },
-    { value: 'count', label: 'Count Substring', description: 'Count occurrences of substring' },
-    { value: 'find', label: 'Find Substring', description: 'Find position of substring' },
-    { value: 'startswith', label: 'Starts With', description: 'Check if string starts with prefix' },
-    { value: 'endswith', label: 'Ends With', description: 'Check if string ends with suffix' },
-  ];
-
-  const LIST_OPERATIONS = [
-    { value: 'append', label: 'Append', description: 'Add item to end of list' },
-    { value: 'extend', label: 'Extend', description: 'Add all items from another list' },
-    { value: 'insert', label: 'Insert', description: 'Insert item at specific position' },
-    { value: 'remove', label: 'Remove', description: 'Remove first occurrence of item' },
-    { value: 'pop', label: 'Pop', description: 'Remove and return item at index' },
-    { value: 'index', label: 'Index', description: 'Find index of item in list' },
-    { value: 'count', label: 'Count', description: 'Count occurrences of item' },
-    { value: 'sort', label: 'Sort', description: 'Sort list in place' },
-    { value: 'reverse', label: 'Reverse', description: 'Reverse list in place' },
-    { value: 'len', label: 'Length', description: 'Get number of items in list' },
-    { value: 'slice', label: 'Slice', description: 'Extract portion of list' },
-  ];
-
-  const DICT_OPERATIONS = [
-    { value: 'keys', label: 'Get Keys', description: 'Get all dictionary keys' },
-    { value: 'values', label: 'Get Values', description: 'Get all dictionary values' },
-    { value: 'items', label: 'Get Items', description: 'Get all key-value pairs' },
-    { value: 'get', label: 'Get Value', description: 'Get value by key with optional default' },
-    { value: 'setdefault', label: 'Set Default', description: 'Get value or set default if missing' },
-    { value: 'update', label: 'Update', description: 'Update dictionary with another dictionary' },
-    { value: 'clear', label: 'Clear', description: 'Remove all items from dictionary' },
-    { value: 'pop', label: 'Pop', description: 'Remove and return value by key' },
-    { value: 'len', label: 'Length', description: 'Get number of key-value pairs' },
-  ];
-
-  // Get operations based on data type
-  const getOperations = () => {
-    switch (data.dataType) {
+  // Define operations based on variable type
+  const getOperationsForType = (type: VariableInfo['type']) => {
+    switch(type) {
       case 'string':
-        return STRING_OPERATIONS;
+        return [
+          { op: '+', label: 'Concatenate (+)', needsValue: true },
+          { op: '*', label: 'Repeat (*)', needsValue: true },
+          { op: 'upper()', label: 'To Uppercase', needsValue: false },
+          { op: 'lower()', label: 'To Lowercase', needsValue: false },
+          { op: 'strip()', label: 'Strip', needsValue: false },
+          { op: 'len()', label: 'Get Length', needsValue: false },
+          { op: 'int()', label: 'To Int', needsValue: false },
+          { op: 'str()', label: 'To String', needsValue: false },
+          { op: 'float()', label: 'To Float', needsValue: false },
+        ];
       case 'list':
-        return LIST_OPERATIONS;
+        return [
+          { op: '+', label: 'Concatenate (+)', needsValue: true },
+          { op: '*', label: 'Repeat (*)', needsValue: true },
+          { op: 'append', label: 'Append Item', needsValue: true },
+          { op: 'len()', label: 'Get Length', needsValue: false },
+          { op: 'sorted()', label: 'Sort', needsValue: false },
+          { op: 'reversed()', label: 'Reverse', needsValue: false },
+          { op: 'min()', label: 'Min', needsValue: false },
+          { op: 'max()', label: 'Max', needsValue: false },
+          { op: 'sum()', label: 'Sum', needsValue: false },
+        ];
       case 'dict':
-        return DICT_OPERATIONS;
+        return [
+          { op: 'get', label: 'Get Value', needsValue: true },
+          { op: 'update', label: 'Update', needsValue: true },
+          { op: 'keys()', label: 'Get Keys', needsValue: false },
+          { op: 'values()', label: 'Get Values', needsValue: false },
+          { op: 'len()', label: 'Get Length', needsValue: false },
+        ];
+      case 'boolean':
+        return [
+          { op: 'and', label: 'AND', needsValue: true },
+          { op: 'or', label: 'OR', needsValue: true },
+          { op: 'not', label: 'NOT', needsValue: false },
+        ];
+      case 'number':
       default:
-        return [];
+        return [
+          { op: '+', label: 'Add (+)', needsValue: true },
+          { op: '-', label: 'Subtract (-)', needsValue: true },
+          { op: '*', label: 'Multiply (*)', needsValue: true },
+          { op: '/', label: 'Divide (/)', needsValue: true },
+          { op: '%', label: 'Modulo (%)', needsValue: true },
+          { op: '**', label: 'Power (**)', needsValue: true },
+          { op: '==', label: 'Equal (==)', needsValue: true },
+          { op: '!=', label: 'Not Equal (!=)', needsValue: true },
+          { op: '<', label: 'Less Than (<)', needsValue: true },
+          { op: '>', label: 'Greater Than (>)', needsValue: true },
+          { op: '<=', label: 'Less or Equal (<=)', needsValue: true },
+          { op: '>=', label: 'Greater or Equal (>=)', needsValue: true },
+          { op: 'int()', label: 'To Int', needsValue: false },
+          { op: 'str()', label: 'To String', needsValue: false },
+          { op: 'float()', label: 'To Float', needsValue: false },
+          { op: 'min()', label: 'Min', needsValue: false },
+          { op: 'max()', label: 'Max', needsValue: false },
+          { op: 'sum()', label: 'Sum', needsValue: false },
+        ];
     }
   };
 
-  // Auto-detect data type from selected variable
-  useEffect(() => {
-    if (data.targetVariable) {
-      const variable = availableVariables.find(v => v.name === data.targetVariable);
-      if (variable && variable.type !== 'unknown' && variable.type !== data.dataType) {
-        updateNode(id, {
-          ...data,
-          dataType: variable.type as 'string' | 'list' | 'dict',
-          operation: '', // Reset operation when type changes
-          parameters: []
-        });
-      }
-    }
-  }, [data.targetVariable, availableVariables, data.dataType, id, updateNode]);
-
-  // Select target variable
-  const selectTargetVariable = (varName: string) => {
-    const variable = availableVariables.find(v => v.name === varName);
-    if (variable) {
-      updateNode(id, {
-        ...data,
-        type: 'operation',
-        targetVariable: varName,
-        dataType: variable.type as 'string' | 'list' | 'dict',
-        operation: '',
-        parameters: []
-      });
-    }
+  // Get the type of the selected source variable
+  const getSourceVariableType = (): VariableInfo['type'] => {
+    if (!data.sourceVariable) return 'unknown';
+    
+    const variable = variablesWithTypes.find(v => v.name === data.sourceVariable);
+    return variable?.type || 'unknown';
   };
 
-  // Select operation
-  const selectOperation = (operation: string) => {
-    updateNode(id, {
-      ...data,
-      type: 'operation',
+  const sourceVarType = getSourceVariableType();
+  const operations = getOperationsForType(sourceVarType);
+  
+  // Find current operation details
+  const currentOperation = operations.find(op => op.op === data.operation);
+  
+  // Validate variable name for new variables
+  const validateVariableName = (name: string): string | null => {
+    if (!name) return null; // Empty name is handled by placeholder
+    
+    const PYTHON_KEYWORDS = [
+      'False', 'None', 'True', 'and', 'as', 'assert', 'async', 'await', 'break', 
+      'class', 'continue', 'def', 'del', 'elif', 'else', 'except', 'finally', 
+      'for', 'from', 'global', 'if', 'import', 'in', 'is', 'lambda', 'nonlocal', 
+      'not', 'or', 'pass', 'raise', 'return', 'try', 'while', 'with', 'yield'
+    ];
+    
+    if (PYTHON_KEYWORDS.includes(name)) {
+      return `'${name}' is a Python keyword`;
+    }
+    
+    if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(name)) {
+      return 'Variable name must start with a letter or underscore and contain only letters, numbers, and underscores';
+    }
+
+    const variableNames = variablesWithTypes.map(v => v.name);
+    if (variableNames.includes(name)) {
+      return `Variable '${name}' already exists`;
+    }
+
+    return null;
+  };
+
+  const handleSourceVariableChange = (variable: string) => {
+    // Reset operation when changing source variable since operation options depend on type
+    updateNode(id, { 
+      ...data, 
+      sourceVariable: variable,
+      operation: '',
+      operationValue: ''
+    });
+  };
+
+  const handleOperationChange = (operation: string) => {
+    // Find if the operation needs a value
+    const opDetails = operations.find(op => op.op === operation);
+    
+    updateNode(id, { 
+      ...data, 
       operation,
-      parameters: getDefaultParameters(operation)
+      // Clear operationValue if the operation doesn't need a value
+      operationValue: opDetails?.needsValue ? data.operationValue : ''
     });
   };
 
-  // Handle parameter change
-  const handleParameterChange = (index: number, value: string) => {
-    const newParameters = [...data.parameters];
-    newParameters[index] = value;
+  const handleOperationValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const operationValue = e.target.value;
+    updateNode(id, { ...data, operationValue });
+  };
+
+  const handleCreateNewVariableChange = (checked: boolean) => {
     updateNode(id, {
       ...data,
-      type: 'operation',
-      parameters: newParameters
+      createNewVariable: checked,
+      // Reset target variable when toggling
+      targetVariable: checked ? '' : data.sourceVariable 
     });
   };
 
-  // Get default parameters based on operation
-  const getDefaultParameters = (operation: string) => {
-    switch (operation) {
-      case 'replace':
-        return ['', ''];
-      case 'split':
-        return [''];
-      case 'join':
-        return [''];
-      case 'count':
-        return [''];
-      case 'find':
-        return [''];
-      case 'startswith':
-        return [''];
-      case 'endswith':
-        return [''];
-      case 'append':
-        return [''];
-      case 'extend':
-        return [''];
-      case 'insert':
-        return ['0', ''];
-      case 'remove':
-        return [''];
-      case 'pop':
-        return ['-1'];
-      case 'index':
-        return [''];
-      case 'sort':
-        return ['False'];
-      case 'slice':
-        return ['0', 'None'];
-      case 'get':
-        return ['', 'None'];
-      case 'setdefault':
-        return ['', ''];
-      case 'update':
-        return ['{}'];
-      case 'pop':
-        return ['', 'None'];
-      default:
-        return [];
+  const handleTargetVariableChange = (variable: string) => {
+    updateNode(id, { ...data, targetVariable: variable });
+  };
+
+  const handleNewVariableNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const targetVariable = e.target.value.trim();
+    const error = validateVariableName(targetVariable);
+    setVariableNameError(error);
+    
+    updateNode(id, { ...data, targetVariable });
+  };
+
+  const generateOperationCode = () => {
+    if (!data.sourceVariable || !data.operation) return '';
+
+    const op = data.operation;
+    const srcVar = data.sourceVariable;
+
+    // Handle operations based on their format
+    if (op.endsWith('()')) {
+      // Function-style operations like upper() or len()
+      return `${op.slice(0, -2)}(${srcVar})`;
+    } else if (['append', 'get', 'update'].includes(op)) {
+      // Method-style operations
+      const value = data.operationValue || '';
+      switch (op) {
+        case 'append':
+          return `${srcVar}.append(${value})`;
+        case 'get':
+          return `${srcVar}.get(${value}, None)`;
+        case 'update':
+          return `${srcVar}.update(${value})`;
+        default:
+          return '';
+      }
+    } else if (['and', 'or', 'not'].includes(op)) {
+      // Boolean operations
+      const value = data.operationValue || '';
+      switch (op) {
+        case 'not':
+          return `not ${srcVar}`;
+        case 'and':
+        case 'or':
+          return `${srcVar} ${op} ${value}`;
+        default:
+          return '';
+      }
+    } else if (['int()', 'str()', 'float()'].includes(op)) {
+      return `${op.slice(0, -2)}(${srcVar})`;
+    } else if (['min()', 'max()', 'sum()'].includes(op)) {
+      return `${op.slice(0, -2)}(${srcVar})`;
+    } else {
+      // Standard operations (+, -, *, /, etc.)
+      return `${srcVar} ${op} ${data.operationValue || ''}`;
     }
   };
 
-  // Handle result variable change
-  const handleResultVariableChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newResultVariable = e.target.value.trim();
-    setResultVariable(newResultVariable);
-    updateNode(id, {
-      ...data,
-      type: 'operation',
-      resultVariable: newResultVariable
-    });
-  };
-
-  // Insert variable at cursor position for parameters
-  const insertVariableToParameter = (index: number, varName: string) => {
-    const newParameters = [...data.parameters];
-    newParameters[index] = varName;
-    updateNode(id, {
-      ...data,
-      parameters: newParameters
-    });
-    setShowParameterSuggestions(null);
-  };
-
-  // Get parameter labels based on operation
-  const getParameterLabels = () => {
-    const { operation } = data;
+  const generateFinalCode = () => {
+    const operationCode = generateOperationCode();
+    if (!operationCode) return '';
     
-    switch (operation) {
-      case 'replace':
-        return ['Old', 'New'];
-      case 'split':
-        return ['Delimiter'];
-      case 'join':
-        return ['Separator'];
-      case 'count':
-        return ['Substring'];
-      case 'find':
-        return ['Substring'];
-      case 'startswith':
-        return ['Prefix'];
-      case 'endswith':
-        return ['Suffix'];
-      case 'append':
-        return ['Value'];
-      case 'extend':
-        return ['List'];
-      case 'insert':
-        return ['Index', 'Value'];
-      case 'remove':
-        return ['Value'];
-      case 'pop':
-        return ['Index'];
-      case 'index':
-        return ['Value'];
-      case 'sort':
-        return ['Reverse'];
-      case 'slice':
-        return ['Start', 'End'];
-      case 'get':
-        return ['Key', 'Default'];
-      case 'setdefault':
-        return ['Key', 'Default'];
-      case 'update':
-        return ['Dictionary'];
-      default:
-        return [];
+    // If creating a new variable or targeting an existing variable
+    if (data.createNewVariable && data.targetVariable) {
+      return `${data.targetVariable} = ${operationCode}`;
+    } else if (data.targetVariable) {
+      return `${data.targetVariable} = ${operationCode}`;
+    }
+    
+    // For operations that modify in place like append
+    return operationCode;
+  };
+
+  const handleMakeVariableGlobal = () => {
+    // Only proceed if we have valid data
+    if (!data.createNewVariable || !data.targetVariable || variableNameError || 
+        !data.sourceVariable || !data.operation) {
+      return;
+    }
+    
+    // Register the new variable globally
+    const finalCode = generateFinalCode();
+    if (finalCode) {
+      setVariable(data.targetVariable, finalCode.split(' = ')[1], id);
+      setShowCreated(true);
+      if (createdTimeout.current) clearTimeout(createdTimeout.current);
+      createdTimeout.current = setTimeout(() => setShowCreated(false), 1500);
     }
   };
 
-  // Get operation description
-  const getOperationDescription = () => {
-    const { operation } = data;
-    const operations = getOperations();
-    const op = operations.find(o => o.value === operation);
-    return op?.description || '';
-  };
+  // Determine if the operation requires a value input
+  const operationNeedsValue = currentOperation?.needsValue ?? false;
+  const resultType = data.operation ? operationResultType[data.operation] || 'unknown' : '';
 
-  // Generate Python code for the operation
-  const generateCode = () => {
-    const { dataType, operation, parameters, targetVariable } = data;
-    
-    if (!operation || !targetVariable) return '';
-    
-    let code = '';
-    
-    switch (operation) {
-      case 'upper':
-      case 'lower':
-      case 'capitalize':
-      case 'strip':
-        code = `${targetVariable}.${operation}()`;
-        break;
-      case 'replace':
-        code = `${targetVariable}.replace(${parameters[0]}, ${parameters[1]})`;
-        break;
-      case 'split':
-        code = `${targetVariable}.split(${parameters[0]})`;
-        break;
-      case 'join':
-        code = `${parameters[0]}.join(${targetVariable})`;
-        break;
-      case 'len':
-        code = `len(${targetVariable})`;
-        break;
-      case 'count':
-        code = `${targetVariable}.count(${parameters[0]})`;
-        break;
-      case 'find':
-        code = `${targetVariable}.find(${parameters[0]})`;
-        break;
-      case 'startswith':
-        code = `${targetVariable}.startswith(${parameters[0]})`;
-        break;
-      case 'endswith':
-        code = `${targetVariable}.endswith(${parameters[0]})`;
-        break;
-      case 'append':
-        code = `${targetVariable}.append(${parameters[0]})`;
-        break;
-      case 'extend':
-        code = `${targetVariable}.extend(${parameters[0]})`;
-        break;
-      case 'insert':
-        code = `${targetVariable}.insert(${parameters[0]}, ${parameters[1]})`;
-        break;
-      case 'remove':
-        code = `${targetVariable}.remove(${parameters[0]})`;
-        break;
-      case 'pop':
-        code = `${targetVariable}.pop(${parameters[0]})`;
-        break;
-      case 'index':
-        code = `${targetVariable}.index(${parameters[0]})`;
-        break;
-      case 'sort':
-        code = `${targetVariable}.sort(reverse=${parameters[0]})`;
-        break;
-      case 'reverse':
-        code = `${targetVariable}.reverse()`;
-        break;
-      case 'slice':
-        code = `${targetVariable}[${parameters[0]}:${parameters[1]}]`;
-        break;
-      case 'keys':
-        code = `list(${targetVariable}.keys())`;
-        break;
-      case 'values':
-        code = `list(${targetVariable}.values())`;
-        break;
-      case 'items':
-        code = `list(${targetVariable}.items())`;
-        break;
-      case 'get':
-        code = `${targetVariable}.get(${parameters[0]}, ${parameters[1]})`;
-        break;
-      case 'setdefault':
-        code = `${targetVariable}.setdefault(${parameters[0]}, ${parameters[1]})`;
-        break;
-      case 'update':
-        code = `${targetVariable}.update(${parameters[0]})`;
-        break;
-      case 'clear':
-        code = `${targetVariable}.clear()`;
-        break;
-      default:
-        code = '';
+  // Handler for renaming a created variable
+  const handleRenameVariable = (oldName: string, newName: string) => {
+    if (!newName || oldName === newName) return;
+    // Validate new name
+    const error = validateVariableName(newName);
+    if (error) {
+      setVariableNameError(error);
+      return;
     }
-    
-    // Store result in variable if specified
-    if (resultVariable) {
-      code = `${resultVariable} = ${code}`;
+    // Rename in the variable store
+    const variables = (useFlowStore.getState().variables as Map<string, { value: string; nodeId: string }>);
+    const value = variables.get(oldName)?.value;
+    if (value !== undefined) {
+      variables.delete(oldName);
+      variables.set(newName, { value, nodeId: id });
+      useFlowStore.setState({ variables });
+      setVersion(v => v + 1);
     }
-    
-    return code;
+    setVariableNameError(null);
   };
 
-  // Render parameter variable suggestions
-  const renderParameterVariableSuggestions = (index: number) => {
-    if (availableVariables.length === 0) return null;
-    
-    return (
-      <div className={nodeStyles.suggestions.container}>
-        <p className={nodeStyles.suggestions.title}>Available Variables:</p>
-        <div className={nodeStyles.suggestions.list}>
-          {availableVariables.map(varInfo => (
-            <button
-              key={varInfo.name}
-              onClick={() => insertVariableToParameter(index, varInfo.name)}
-              className={clsx(
-                nodeStyles.suggestions.item,
-                "flex items-center gap-1"
-              )}
-              title={`Value: ${varInfo.value}`}
-            >
-              <span>{varInfo.name}</span>
-              <span className="text-[8px] px-1 py-0.5 rounded bg-primary/10 text-primary/70">
-                {varInfo.type}
-              </span>
-            </button>
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  const renderParameterSuggestions = (paramIndex: number) => {
-    if (!availableParameters.length) return null;
-    return (
-      <div className={nodeStyles.suggestions.container}>
-        <p className={nodeStyles.suggestions.title}>Available Parameters:</p>
-        <div className={nodeStyles.suggestions.list}>
-          {availableParameters.map(param => (
-            <button
-              key={param}
-              onClick={() => handleParameterChange(paramIndex, param)}
-              className={nodeStyles.suggestions.item}
-              title={`Parameter: ${param}`}
-            >
-              {param}
-            </button>
-          ))}
-        </div>
-      </div>
-    );
+  // Handler for deleting a created variable
+  const handleDeleteVariable = (name: string) => {
+    const variables = (useFlowStore.getState().variables as Map<string, { value: string; nodeId: string }>);
+    variables.delete(name);
+    useFlowStore.setState({ variables });
+    setVersion(v => v + 1);
   };
 
   return (
     <NodeWrapper
       id={id}
-      icon={Wrench}
+      icon={Calculator}
       label="Operation"
       selected={selected}
       category="core"
     >
-      <div className="flex flex-col gap-3">
-        {/* Variable Selection */}
-        <div>
-          <label className={nodeStyles.label}>Target Variable</label>
-          <div className={nodeStyles.suggestions.list}>
-            {filteredVariables.map(varInfo => (
-              <button
-                key={varInfo.name}
-                onClick={() => selectTargetVariable(varInfo.name)}
-                className={clsx(
-                  nodeStyles.suggestions.item,
-                  "flex items-center gap-1",
-                  data.targetVariable === varInfo.name && "bg-primary/10 text-primary"
-                )}
-                title={`Value: ${varInfo.value}`}
-              >
-                <span>{varInfo.name}</span>
-                <span className="text-[8px] px-1 py-0.5 rounded bg-primary/10 text-primary/70">
-                  {varInfo.type}
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Operation Selection */}
-        {data.dataType && (
-          <div>
-            <label className={nodeStyles.label}>Operation</label>
-            <div className={nodeStyles.suggestions.list}>
-              {getOperations().map((op) => (
-                <button
-                  key={op.value}
-                  onClick={() => selectOperation(op.value)}
-                  className={clsx(
-                    nodeStyles.suggestions.item,
-                    "flex items-center gap-1",
-                    data.operation === op.value && "bg-primary/10 text-primary"
-                  )}
-                  title={op.description}
-                >
-                  <span>{op.label}</span>
-                </button>
-              ))}
+      <div className="space-y-4">
+        {variablesWithTypes.length > 0 ? (
+          <>
+            {/* Source Variable Selection (Badges) */}
+            <div>
+              <label className={nodeStyles.label}>Source Variable</label>
+              <div className={nodeStyles.suggestions.list}>
+                {variablesWithTypes.map(variable => (
+                  <button
+                    key={variable.name}
+                    onClick={() => handleSourceVariableChange(variable.name)}
+                    className={clsx(
+                      nodeStyles.suggestions.item,
+                      "flex items-center gap-1.5",
+                      data.sourceVariable === variable.name && "bg-primary/10 text-primary"
+                    )}
+                    title={`Type: ${variable.type}`}
+                  >
+                    <span>{variable.name}</span>
+                    <span className="text-[8px] px-1 py-0.5 rounded bg-primary/10 text-primary/70">
+                      {variable.type}
+                    </span>
+                  </button>
+                ))}
+              </div>
             </div>
             
-            {/* Operation Description */}
-            {data.operation && (
-              <div className="mt-1.5 flex items-start gap-1.5 text-[10px] text-muted-foreground">
-                <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                <span>{getOperationDescription()}</span>
-              </div>
+            {data.sourceVariable && (
+              <>
+                {/* Operations Selection (Badges) with tooltips */}
+                <div>
+                  <label className={nodeStyles.label}>Operation for {sourceVarType}</label>
+                  <div className={nodeStyles.suggestions.list}>
+                    {operations.map(({ op, label }) => (
+                      <button
+                        key={op}
+                        onClick={() => handleOperationChange(op)}
+                        className={clsx(
+                          nodeStyles.suggestions.item,
+                          data.operation === op && "bg-primary/10 text-primary"
+                        )}
+                        title={operationExamples[op] || label}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                
+                {data.operation && operationNeedsValue && (
+                  <div>
+                    <label className={nodeStyles.label}>Value</label>
+                    <input
+                      type="text"
+                      className={nodeStyles.input}
+                      placeholder="Value or variable name"
+                      value={data.operationValue || ''}
+                      onChange={handleOperationValueChange}
+                    />
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2 pt-2">
+                  <Checkbox 
+                    id="createNewVariable" 
+                    checked={!!data.createNewVariable}
+                    onCheckedChange={handleCreateNewVariableChange}
+                  />
+                  <Label htmlFor="createNewVariable">Create new variable</Label>
+                </div>
+                
+                {data.createNewVariable ? (
+                  <div>
+                    <label className={nodeStyles.label}>New Variable Name</label>
+                    <input
+                      type="text"
+                      className={clsx(
+                        nodeStyles.input,
+                        variableNameError ? "border-destructive focus:ring-destructive/50" : ""
+                      )}
+                      placeholder="Enter new variable name"
+                      value={data.targetVariable || ''}
+                      onChange={handleNewVariableNameChange}
+                    />
+                    {variableNameError && (
+                      <p className={nodeStyles.error}>{variableNameError}</p>
+                    )}
+                    <Button 
+                      className="mt-3 w-full flex items-center justify-center gap-2"
+                      variant="outline"
+                      onClick={handleMakeVariableGlobal}
+                      disabled={!data.targetVariable || !!variableNameError}
+                    >
+                      <Globe className="h-4 w-4" />
+                      <span>Create Variable</span>
+                    </Button>
+                    {showCreated && (
+                      <div className="mt-2 text-green-600 text-xs font-semibold flex items-center gap-1">
+                        <span className="inline-block w-3 h-3 rounded-full bg-green-500" />
+                        Variable created!
+                      </div>
+                    )}
+                    {/* List of created variables with rename/delete */}
+                    {createdVariables.length > 0 && (
+                      <div className="mt-4">
+                        <label className={nodeStyles.label}>Created Variables</label>
+                        <div className="space-y-2">
+                          {createdVariables.map(v => (
+                            <div key={v.name} className="flex items-center gap-2">
+                              <input
+                                className={nodeStyles.input + ' w-32'}
+                                value={v.name}
+                                onChange={e => handleRenameVariable(v.name, e.target.value)}
+                                onBlur={e => handleRenameVariable(v.name, e.target.value)}
+                              />
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="text-destructive hover:bg-destructive/10"
+                                onClick={() => handleDeleteVariable(v.name)}
+                                title="Delete variable"
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <label className={nodeStyles.label}>Store Result In</label>
+                    <div className={nodeStyles.suggestions.list}>
+                      {variablesWithTypes.map(variable => (
+                        <button
+                          key={variable.name}
+                          onClick={() => handleTargetVariableChange(variable.name)}
+                          className={clsx(
+                            nodeStyles.suggestions.item,
+                            "flex items-center gap-1.5",
+                            (data.targetVariable || data.sourceVariable) === variable.name && "bg-primary/10 text-primary"
+                          )}
+                          title={`Type: ${variable.type}`}
+                        >
+                          <span>{variable.name}</span>
+                          <span className="text-[8px] px-1 py-0.5 rounded bg-primary/10 text-primary/70">
+                            {variable.type}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
-          </div>
-        )}
-
-        {/* Parameters */}
-        {data.operation && data.parameters.map((param, index) => (
-          <div key={index}>
-            <label className={nodeStyles.label}>{getParameterLabels()[index]}</label>
-            <div className="relative">
-              <input
-                type="text"
-                className={nodeStyles.input}
-                value={param}
-                onChange={(e) => handleParameterChange(index, e.target.value)}
-                onFocus={() => setShowParameterSuggestions(index)}
-                placeholder={`Enter ${getParameterLabels()[index].toLowerCase()}`}
-              />
-              {showParameterSuggestions === index && renderParameterVariableSuggestions(index)}
-              {showParameterSuggestions === index && renderParameterSuggestions(index)}
-            </div>
-          </div>
-        ))}
-
-        {/* Result Variable */}
-        <div>
-          <label className={nodeStyles.label}>Store Result In</label>
-          <div className="relative">
-            <input
-              type="text"
-              className={nodeStyles.input}
-              value={resultVariable}
-              onChange={handleResultVariableChange}
-              placeholder="Variable name (optional)"
-            />
-          </div>
-        </div>
-
-        {/* Error Message */}
-        {operationError && (
-          <div className="flex items-start gap-1.5 text-[10px] text-destructive">
-            <AlertCircle className="h-3 w-3 mt-0.5 flex-shrink-0" />
-            <span>{operationError}</span>
-          </div>
-        )}
-
-        {/* Generated Code Preview */}
-        {data.operation && data.targetVariable && (
-          <div className="mt-2 rounded-md bg-muted/50 p-2 text-xs font-mono">
-            <pre className="whitespace-pre-wrap">{generateCode()}</pre>
+          </>
+        ) : (
+          <div className="p-4 text-center border border-dashed rounded-md">
+            <p className="text-sm text-muted-foreground mb-2">No variables found</p>
+            <p className="text-xs text-muted-foreground">Create a variable node first</p>
           </div>
         )}
       </div>
@@ -549,5 +601,4 @@ const OperationNode = memo(({ data, id, selected }: NodeComponentProps<Operation
 });
 
 OperationNode.displayName = 'OperationNode';
-
 export default OperationNode; 

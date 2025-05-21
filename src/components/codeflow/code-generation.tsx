@@ -45,6 +45,22 @@ export const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: 
     return `"${condition}"`;
   };
 
+  // Helper to recursively format JS values as Python code
+  function formatPythonValue(val: any): string {
+    if (val === null) return 'None';
+    if (val === true) return 'True';
+    if (val === false) return 'False';
+    if (val === '') return '""';
+    if (typeof val === 'number') return String(val);
+    if (Array.isArray(val)) {
+      return `[${val.map(formatPythonValue).join(', ')}]`;
+    }
+    if (typeof val === 'object') {
+      return `{${Object.entries(val).map(([k, v]) => `"${k}": ${formatPythonValue(v)}`).join(', ')}}`;
+    }
+    return `"${val}"`;
+  }
+
   switch (node.type) {
     case 'comment':
       // Only generate comment if generateComment is true
@@ -118,42 +134,75 @@ export const generateNodeCode = (node: Node<NodeData>, edges: Edge[], allNodes: 
         return `${spaces}for ${node.data.condition || 'i in range(10)'}:${generateBodyForHandle('body')}`;
       }
       return `${spaces}for i in range(10):${generateBodyForHandle('body')}`;
+    case 'whileLoop':
+      if (node.data.type === 'whileLoop') {
+        return `${spaces}while ${formatCondition(node.data.condition || 'True')}:${generateBodyForHandle('body')}`;
+      }
+      return `${spaces}while True:${generateBodyForHandle('body')}`;
+    case 'break':
+      return `${spaces}break`;
+    case 'continue':
+      return `${spaces}continue`;
+    case 'operation':
+      if (node.data.type === 'operation') {
+        const sourceVariable = node.data.sourceVariable || 'variable';
+        const operation = node.data.operation || '+';
+        const operationValue = node.data.operationValue || '1';
+        const targetVariable = node.data.createNewVariable 
+          ? (node.data.targetVariable || 'result') 
+          : sourceVariable;
+        
+        // Format the value based on type
+        let formattedValue = operationValue;
+        if (!allVariables.includes(operationValue) && isNaN(Number(operationValue))) {
+          formattedValue = `"${operationValue}"`;
+        }
+        
+        return `${spaces}${targetVariable} = ${sourceVariable} ${operation} ${formattedValue}`;
+      }
+      return `${spaces}# Invalid operation`;
     case 'variable':
       if (node.data.type === 'variable') {
         const name = node.data.name || 'variable';
-        const value = node.data.value || 'None';
+        const value = node.data.value !== undefined ? String(node.data.value) : 'None';
         
         // Handle different value types appropriately
         if (node.data.valueType === 'list') {
           // For list type, use the listItems array directly
-          const listItems = (node.data.listItems || []) as string[];
-          return `${spaces}${name} = [${listItems.map((item: string) => {
-            // Check if item is a number
-            const num = Number(item);
-            return !isNaN(num) ? num : `"${item}"`;
-          }).join(', ')}]`;
+          const listItems = (node.data.listItems || []) as any[];
+          return `${spaces}${name} = [${listItems.map(formatPythonValue).join(', ')}]`;
         } else if (node.data.valueType === 'dict') {
           // For dict type, format it as a proper Python dictionary with type handling
-          const dictItems = Array.isArray(value) && value.length > 0 && typeof value[0] === 'object' && value[0] !== null
-            ? value.map((item: any) => ({ key: item.key, value: item.value })) 
-            : [];
-          return `${spaces}${name} = {${dictItems.map(item => {
-            // Check if value is a number
-            const numValue = Number(item.value);
-            const formattedValue = !isNaN(numValue) ? numValue : `"${item.value}"`;
-            
-            // Always quote keys in Python dictionaries
-            return `"${item.key}": ${formattedValue}`;
-          }).join(', ')}}`;
+          // Prefer dictItems if present, fallback to value
+          const dictItems = Array.isArray(node.data.dictItems)
+            ? node.data.dictItems
+            : (
+                Array.isArray(node.data.value) && node.data.value.length > 0
+                  ? node.data.value.map((item: any) => {
+                      if (typeof item === 'object' && item !== null) {
+                        return { key: item.key, value: item.value };
+                      }
+                      return { key: 'key', value: String(item) };
+                    })
+                  : []
+              );
+          return `${spaces}${name} = {${dictItems.map((item: any) => `"${item.key}": ${formatPythonValue(item.value)}`).join(', ')}}`;
         } else if (value === 'true' || value === 'false') {
           return `${spaces}${name} = ${value === 'true' ? 'True' : 'False'}`;
         } else if (!isNaN(Number(value))) {
           return `${spaces}${name} = ${value}`;
-        } else if (typeof value === 'string' && (value.includes('+') || value.includes('-') || value.includes('*') || value.includes('/') || 
-                   allVariables.some(v => value.includes(v)))) {
+        } else if (
+          value && typeof value === 'string' && (
+            value.includes('+') || 
+            value.includes('-') || 
+            value.includes('*') || 
+            value.includes('/') || 
+            allVariables.some(v => typeof v === 'string' && value.includes(v))
+          )
+        ) {
           return `${spaces}${name} = ${value}`;
         } else {
-          return `${spaces}${name} = "${String(value)}"`;
+          return `${spaces}${name} = "${value}"`;
         }
       }
       return `${spaces}variable = None`;
