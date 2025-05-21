@@ -60,9 +60,24 @@ const CodePanel = memo(() => {
     }
   }, [dialogOpen, generatedCode]);
 
+  // Fixed handleRunCode function with proper error handling
   const handleRunCode = async () => {
-    await runPython(generatedCode);
-    setActiveTab('output');
+    try {
+      if (!generatedCode.trim()) {
+        console.warn("No code to execute");
+        return;
+      }
+      
+      // Run the Python code
+      await runPython(generatedCode);
+      
+      // Switch to output tab to show results
+      setActiveTab('output');
+    } catch (error) {
+      console.error("Error executing code:", error);
+      // Still switch to output tab to show error
+      setActiveTab('output');
+    }
   };
 
   const copyToClipboard = () => {
@@ -234,7 +249,7 @@ const CodePanel = memo(() => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {/* Run button */}
+            {/* Run button - Ensure onClick is properly set */}
             <Button
               variant={hasOutput ? (hasError ? "destructive" : "secondary") : "default"}
               size="sm"
@@ -242,7 +257,7 @@ const CodePanel = memo(() => {
                 "h-7 px-2.5 rounded-md transition-all duration-200",
                 !hasOutput && !hasError && "bg-primary hover:bg-primary/90 text-white"
               )}
-              onClick={handleRunCode}
+              onClick={() => handleRunCode()}
               disabled={isLoading}
             >
               {isLoading ? 
@@ -513,10 +528,10 @@ const CodePanel = memo(() => {
             </TabsContent>
           </Tabs>
           
-          {/* Footer with Run Button */}
+          {/* Footer with Run Button - Fix the onClick handler */}
           <div className="p-4 border-t flex justify-end">
             <Button
-              onClick={handleRunCode}
+              onClick={() => handleRunCode()}
               disabled={isLoading}
               className={clsx(
                 "flex items-center gap-2 transition-all duration-200",

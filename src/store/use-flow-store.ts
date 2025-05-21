@@ -297,26 +297,72 @@ const initialEdges: Edge[] = [];
 
 const initialNodes: Node<NodeData>[] = [
   {
-    id: 'comment1',
-    type: 'comment',
-    position: { x: 100, y: 100 },
-    data: {
-      type: 'comment',
-      level: '1',
-      label: 'A simple Hello World program',
-      arrowStyle: {},
-      generateComment: true
+    "id": "comment1",
+    "type": "comment",
+    "position": {
+      "x": 100,
+      "y": 100
+    },
+    "data": {
+      "type": "comment",
+      "level": "1",
+      "label": "A simple Hello World program",
+      "arrowStyle": {},
+      "generateComment": true
+    },
+    "measured": {
+      "width": 323,
+      "height": 225
     }
   },
   {
-    id: 'print1',
-    type: 'print',
-    position: { x: 100, y: 350 },
-    data: {
-      type: 'print',
-      label: 'Print',
-      message: 'Hello, World!'
-    }
+    "id": "print1",
+    "type": "print",
+    "position": {
+      "x": 100,
+      "y": 825
+    },
+    "data": {
+      "type": "print",
+      "label": "Print",
+      "message": "{data}"
+    },
+    "measured": {
+      "width": 340,
+      "height": 255
+    },
+    "selected": true,
+    "dragging": false
+  },
+  {
+    "id": "b2873713-21f7-4a4c-b2c2-0101c24731eb",
+    "type": "variable",
+    "position": {
+      "x": 100,
+      "y": 375
+    },
+    "data": {
+      "type": "variable",
+      "label": "Variable",
+      "value": "[1,2,true,null,{\"hello\":\"world\"}]",
+      "valueType": "list",
+      "listItems": [
+        1,
+        2,
+        true,
+        null,
+        {
+          "hello": "world"
+        }
+      ],
+      "name": "data"
+    },
+    "measured": {
+      "width": 340,
+      "height": 433
+    },
+    "selected": false,
+    "dragging": false
   }
 ];
 
