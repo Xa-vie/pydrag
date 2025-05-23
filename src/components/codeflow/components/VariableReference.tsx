@@ -37,17 +37,36 @@ const VariableReference = memo(({ variableName, nodeY, inNodeId, className }: Va
     if (!variableExists) return false;
     
     const nodes = getNodes();
-    // Find all variable definition nodes
-    const variableNodes = nodes.filter(node => 
-      node.type === 'variable' && 
-      node.data.name === variableName
-    );
+    // Find all variable definition nodes (including loop nodes)
+    const variableNodes = nodes.filter(node => {
+      if (node.type === 'variable' && node.data.name === variableName) {
+        return true;
+      }
+      if (node.type === 'forLoop') {
+        const loopScope = node.data.loopScope as { variables: string[] } | undefined;
+        return loopScope?.variables?.includes(variableName);
+      }
+      return false;
+    });
     
     if (variableNodes.length === 0) return false;
     
-    // Check if any definition is above the current node
-    return variableNodes.some(node => node.position.y < nodeY);
-  }, [variableName, nodeY, getNodes, variableExists, variables]);
+    // For loop variables, they should only be visible to nodes below the loop
+    const currentNode = nodes.find(node => node.id === inNodeId);
+    if (!currentNode) return false;
+    
+    return variableNodes.some(node => {
+      // For regular variables, check if they're above
+      if (node.type === 'variable') {
+        return node.position.y < currentNode.position.y;
+      }
+      // For loop variables, check if the loop node is above but not the same node
+      if (node.type === 'forLoop') {
+        return node.position.y < currentNode.position.y && node.id !== inNodeId;
+      }
+      return false;
+    });
+  }, [variableName, inNodeId, getNodes, variableExists, variables]);
 
   return (
     <TooltipProvider>

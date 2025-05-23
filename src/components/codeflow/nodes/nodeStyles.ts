@@ -17,7 +17,7 @@ export const nodeStyles = {
       list: "flex flex-wrap gap-2",
       item: clsx(
         "text-xs px-2.5 py-1 rounded-md border border-border/40",
-        "bg-white/70 dark:bg-background/70 shadow-sm backdrop-blur-md hover:bg-primary/10 hover:text-primary transition-all duration-150",
+        "shadow-sm backdrop-blur-md hover:bg-primary/10 hover:text-primary transition-all duration-150",
         "cursor-pointer select-none"
       )
     },
