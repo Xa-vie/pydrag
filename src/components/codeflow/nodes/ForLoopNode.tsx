@@ -644,7 +644,7 @@ const ForLoopNode = memo(({ data, id, selected }: NodeComponentProps<ForLoopNode
               )}
             </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Index variable will be 'idx'
+                Index variable will be &apos;idx&apos;
               </p>
           </div>
         </div>
